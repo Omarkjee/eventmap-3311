@@ -1,0 +1,23 @@
+/* App.css */
+.App {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+}
+
+.left-panel {
+  flex: 1;
+  background-color: white;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.map-container {
+  flex: 2;
+  background-color: lightgray;
+}

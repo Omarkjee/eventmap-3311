@@ -1,0 +1,31 @@
+.host-event {
+  padding: 20px;
+  background-color: #fff;
+}
+
+.host-event form {
+  display: flex;
+  flex-direction: column;
+}
+
+.host-event label {
+  margin-top: 10px;
+}
+
+.host-event input, .host-event textarea {
+  padding: 10px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+}
+
+.host-event button {
+  padding: 10px 15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.host-event button:hover {
+  background-color: #45a049;
+}
