@@ -1,21 +1,20 @@
-import  { useState } from 'react';
+import { useState } from 'react';
 import './App.css';
 import Banner from './components/Banner';
 import NavBar from './components/NavBar';
 import Map from './components/Map';
 import EventsList from './components/EventsList';
-import FriendsList from './components/Friends';
+import FriendsList from './components/FriendsList'; // Ensure correct name
 import Login from './components/Login';
 import Notifications from './components/Notifications';
 
-
 function App() {
   // State to track which section is active
-  const [activeSection, setActiveSection] = useState('events');
+  const [activeSection, setActiveSection] = useState<string>('events');  // Use string typing
 
   // Function to handle button clicks in the NavBar
   const handleNavClick = (section: string) => {
-    setActiveSection(section);D
+    setActiveSection(section);
   };
 
   // Dynamic rendering based on active section
