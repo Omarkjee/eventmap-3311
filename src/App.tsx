@@ -7,6 +7,7 @@ import EventsList from './components/EventsList';
 import FriendsList from './components/FriendsList'; 
 import Login from './components/Login';
 import Notifications from './components/Notifications';
+import Signup from './components/Signup';
 import { getAuth, onAuthStateChanged } from 'firebase/auth'; // Firebase Auth
 import { logOut } from './utils/firebaseAuth';
 
@@ -46,6 +47,8 @@ function App() {
         return <Login />;
       case 'notifications':
         return <Notifications />;
+      case 'signup':
+        return <Signup />;
       case 'logout':
         logOut();
         return null;  // Optionally redirect somewhere or just return null
