@@ -1,9 +1,11 @@
+import { app } from './firebaseConfig';
+
 // Import Firebase Auth and Firestore
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { getFirestore, doc, setDoc } from "firebase/firestore";  // Firestore functions
 
-const auth = getAuth();
-const firestore = getFirestore();  // Initialize Firestore
+const auth = getAuth(app);
+const firestore = getFirestore(app);  // Initialize Firestore
 
 // Helper function to append a symbol if the email belongs to a school domain
 const appendSymbolForSchoolEmail = (email, displayName) => {
