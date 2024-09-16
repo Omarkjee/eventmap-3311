@@ -33,7 +33,7 @@ function App() {
   }, []);
 
   const handleNavClick = (section: string) => {
-    setActiveSection('events');
+    setActiveSection(section);
   };
 
   const renderActiveSection = () => {
