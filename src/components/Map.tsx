@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import './Map.css'; 
+import './Map.css';  // Assuming you have basic CSS for layout
 
 const Map = () => {
   // Set the initial map view (latitude, longitude, zoom level)
