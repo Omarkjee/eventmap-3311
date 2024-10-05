@@ -59,15 +59,35 @@ export const fetchEvents = async (): Promise<EventDetails[]> => {
   try {
     const querySnapshot = await getDocs(collection(db, 'events'));
     let events: EventDetails[] = [];
+    
     querySnapshot.forEach((doc) => {
-      events.push({ id: doc.id, ...doc.data() } as EventDetails);
+      const data = doc.data();
+
+      const event: EventDetails = {
+        id: doc.id,  // Firestore document ID
+        title: data.title || '',
+        description: data.description || '',
+        start_time: data.start_time || '',
+        end_time: data.end_time || '',
+        location_info: data.location_info || '',
+        latitude: data.latitude || 0,  // Default latitude to 0 if missing
+        longitude: data.longitude || 0,  // Default longitude to 0 if missing
+        is_private: data.is_private || false,
+        is_RSVPable: data.is_RSVPable || false,
+        invite_emails: data.invite_emails || [],
+        host_id: data.host_id || '',
+      };
+      
+      events.push(event);
     });
+
     return events;
   } catch (error: any) {
     console.error("Error fetching events:", error);
     throw error;
   }
 };
+
 
 export const handleRSVP = async (eventId: string, userId: string): Promise<void> => {
   try {
