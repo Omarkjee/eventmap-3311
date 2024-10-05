@@ -50,8 +50,8 @@ function App() {
         return <Notifications />;
       case 'signup':
         return <Signup />;
-      case 'host':  // Add the case for HostEvent
-        return <HostEvent />;  // Render the HostEvent component here
+      case 'host':  
+        return <HostEvent />;  
       case 'logout':
         logOut();
         return null;  // Optionally redirect somewhere or just return null

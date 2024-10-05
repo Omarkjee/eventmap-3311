@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createEvent } from '../utils/firebaseEvents';
-import Map from './Map';
+
 
 const HostEvent = () => {
   // Local state for the form inputs (this state is not sent to the database until the form is submitted)
@@ -110,9 +110,7 @@ const HostEvent = () => {
         </button>
 
         <button type="submit">Create Event</button>
-      </form>
-      {/* Pass the isDroppingPin state to enable or disable pin dropping */}
-      <Map onMapClick={handleMapClick} isDroppingPin={isDroppingPin} />
+      </form>    
     </div>
   );
 };
