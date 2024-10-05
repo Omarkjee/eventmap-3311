@@ -13,6 +13,7 @@ Modern UI: Built with a clean and intuitive user interface.
 
 
 src/
+
   ├── components/     # React components for UI
   
   ├── utils/          # Utility functions and helpers
@@ -42,6 +43,15 @@ vite.config.ts      # Vite configuration file
 
 Dependencies
 This project uses the following major dependencies:
+
+React: A JavaScript library for building user interfaces.
+
+TypeScript: A typed superset of JavaScript that compiles to plain JavaScript.
+
+Vite: A fast build tool and development server for modern web projects.
+
+ESLint: A tool for identifying and reporting on patterns found in JavaScript code.
+
 
 React: A JavaScript library for building user interfaces.
 TypeScript: A typed superset of JavaScript that compiles to plain JavaScript.
