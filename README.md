@@ -41,7 +41,8 @@ tsconfig.app.json   # TypeScript configuration for the app
 vite.config.ts      # Vite configuration file
 
 
-Dependencies
+Dependencies:
+
 This project uses the following major dependencies:
 
 React: A JavaScript library for building user interfaces.
