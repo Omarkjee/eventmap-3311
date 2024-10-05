@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { fetchEvents } from '../utils/firebaseEvents'; // Assuming you have this function in firebaseEvents
+import { fetchEvents } from '../utils/firebaseEvents';
 
-const EventsList = () => {
+const EventsList = ({ viewEvent }) => {
   const [currentEvents, setCurrentEvents] = useState([]);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
 
   useEffect(() => {
     const loadEvents = async () => {
       try {
-        const events = await fetchEvents(); // Fetch all events from Firestore
+        const events = await fetchEvents();
 
-        // Get current date and time
         const now = new Date();
 
-        // Separate current and upcoming events
         const current = events.filter(event => new Date(event.start_time) <= now && new Date(event.end_time) >= now);
         const upcoming = events.filter(event => new Date(event.start_time) > now);
 
@@ -50,12 +48,6 @@ const EventsList = () => {
       </ul>
     </div>
   );
-};
-
-// Placeholder function to handle viewing events
-const viewEvent = (eventId: string) => {
-  console.log(`View event with ID: ${eventId}`);
-  // Navigate to the view event UI, or pass the eventId to show event details
 };
 
 export default EventsList;
