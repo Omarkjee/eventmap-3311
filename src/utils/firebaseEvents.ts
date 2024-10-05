@@ -1,8 +1,9 @@
-import { getFirestore, collection, addDoc, doc, updateDoc, getDocs, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, getDocs, Timestamp } from 'firebase/firestore';
 
 const db = getFirestore();
 
 type EventDetails = {
+  id?: string;  // Make id optional for events, only available when fetched from the database
   title: string;
   description: string;
   start_time: Date | string;
@@ -16,6 +17,7 @@ type EventDetails = {
   host_id: string;
 };
 
+// Create Event
 export const createEvent = async (eventDetails: EventDetails): Promise<string> => {
   try {
     const eventRef = await addDoc(collection(db, 'events'), {
@@ -41,6 +43,73 @@ export const createEvent = async (eventDetails: EventDetails): Promise<string> =
   }
 };
 
+// Fetch All Events
+export const fetchEvents = async (): Promise<EventDetails[]> => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'events'));
+    let events: EventDetails[] = [];
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+
+      const event: EventDetails = {
+        id: doc.id,  // Store Firestore document ID separately
+        title: data.title || '',
+        description: data.description || '',
+        start_time: data.start_time.toDate() || '',  // Convert Timestamp to Date
+        end_time: data.end_time.toDate() || '',      // Convert Timestamp to Date
+        location_info: data.location_info || '',
+        latitude: data.latitude || 0,
+        longitude: data.longitude || 0,
+        is_private: data.is_private || false,
+        is_RSVPable: data.is_RSVPable || false,
+        invite_emails: data.invite_emails || [],
+        host_id: data.host_id || '',
+      };
+
+      events.push(event);
+    });
+
+    return events;
+  } catch (error: any) {
+    console.error("Error fetching events:", error);
+    throw error;
+  }
+};
+
+// Fetch Single Event by ID (for View Event UI)
+export const fetchEventById = async (eventId: string): Promise<EventDetails | null> => {
+  try {
+    const eventRef = doc(db, 'events', eventId);
+    const eventSnap = await getDoc(eventRef);
+
+    if (eventSnap.exists()) {
+      const data = eventSnap.data();
+      return {
+        id: eventSnap.id,
+        title: data.title || '',
+        description: data.description || '',
+        start_time: data.start_time.toDate() || '',
+        end_time: data.end_time.toDate() || '',
+        location_info: data.location_info || '',
+        latitude: data.latitude || 0,
+        longitude: data.longitude || 0,
+        is_private: data.is_private || false,
+        is_RSVPable: data.is_RSVPable || false,
+        invite_emails: data.invite_emails || [],
+        host_id: data.host_id || '',
+      };
+    } else {
+      console.error("Event not found");
+      return null;
+    }
+  } catch (error: any) {
+    console.error("Error fetching event:", error);
+    throw error;
+  }
+};
+
+// Edit Event
 export const editEvent = async (eventId: string, updatedDetails: Partial<EventDetails>): Promise<void> => {
   try {
     const eventRef = doc(db, 'events', eventId);
@@ -55,40 +124,7 @@ export const editEvent = async (eventId: string, updatedDetails: Partial<EventDe
   }
 };
 
-export const fetchEvents = async (): Promise<EventDetails[]> => {
-  try {
-    const querySnapshot = await getDocs(collection(db, 'events'));
-    let events: EventDetails[] = [];
-    
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-
-      const event: EventDetails = {
-        id: doc.id,  // Firestore document ID
-        title: data.title || '',
-        description: data.description || '',
-        start_time: data.start_time || '',
-        end_time: data.end_time || '',
-        location_info: data.location_info || '',
-        latitude: data.latitude || 0,  // Default latitude to 0 if missing
-        longitude: data.longitude || 0,  // Default longitude to 0 if missing
-        is_private: data.is_private || false,
-        is_RSVPable: data.is_RSVPable || false,
-        invite_emails: data.invite_emails || [],
-        host_id: data.host_id || '',
-      };
-      
-      events.push(event);
-    });
-
-    return events;
-  } catch (error: any) {
-    console.error("Error fetching events:", error);
-    throw error;
-  }
-};
-
-
+// Handle RSVP
 export const handleRSVP = async (eventId: string, userId: string): Promise<void> => {
   try {
     const rsvpRef = await addDoc(collection(db, 'rsvps'), {
@@ -103,6 +139,7 @@ export const handleRSVP = async (eventId: string, userId: string): Promise<void>
   }
 };
 
+// Invite Users (placeholder)
 export const inviteUsers = async (eventId: string, inviteEmails: string[]): Promise<void> => {
   try {
     inviteEmails.forEach(email => {
