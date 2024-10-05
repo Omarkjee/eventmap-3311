@@ -34,6 +34,9 @@ function App() {
 
   const handleNavClick = (section: string) => {
     setActiveSection(section);
+    if (section !== 'host') {
+      setIsDroppingPin(false);  // Disable pin-dropping when leaving the HostEvent UI
+    }
   };
 
   const renderActiveSection = () => {
