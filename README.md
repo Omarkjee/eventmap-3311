@@ -14,18 +14,31 @@ Modern UI: Built with a clean and intuitive user interface.
 
 src/
   ├── components/     # React components for UI
+  
   ├── utils/          # Utility functions and helpers
+  
   ├── App.css         # Global styling for the application
+  
   ├── App.tsx         # Main App component
+  
   ├── index.css       # Styles for the index page
+  
   ├── main.tsx        # Entry point of the app
+  
   ├── vite-env.d.ts   # TypeScript environment declaration
+  
   .gitignore          # Files and folders to ignore in git
+  
 eslint.config.js    # ESLint configuration file
+
 index.html          # Main HTML file
+
 package.json        # Project dependencies and scripts
+
 tsconfig.app.json   # TypeScript configuration for the app
+
 vite.config.ts      # Vite configuration file
+
 
 Dependencies
 This project uses the following major dependencies:
