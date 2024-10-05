@@ -8,6 +8,7 @@ import FriendsList from './components/FriendsList';
 import Login from './components/Login';
 import Notifications from './components/Notifications';
 import Signup from './components/Signup';
+import HostEvent from './components/HostEvent'; // Import the HostEvent component
 import { getAuth, onAuthStateChanged } from 'firebase/auth'; // Firebase Auth
 import { logOut } from './utils/firebaseAuth';
 
@@ -49,6 +50,8 @@ function App() {
         return <Notifications />;
       case 'signup':
         return <Signup />;
+      case 'host':  // Add the case for HostEvent
+        return <HostEvent />;  // Render the HostEvent component here
       case 'logout':
         logOut();
         return null;  // Optionally redirect somewhere or just return null
