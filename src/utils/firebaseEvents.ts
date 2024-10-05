@@ -1,6 +1,8 @@
+import { app } from './firebaseConfig';
 import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, getDocs, Timestamp } from 'firebase/firestore';
 
-const db = getFirestore();
+
+const db = getFirestore(app);
 
 type EventDetails = {
   id?: string;  // Make id optional for events, only available when fetched from the database
