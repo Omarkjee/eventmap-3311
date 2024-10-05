@@ -4,16 +4,15 @@ import 'leaflet/dist/leaflet.css';
 import './Map.css';  // Assuming you have basic CSS for layout
 
 const Map = ({ onMapClick, isDroppingPin }) => {
-  const [markerPosition, setMarkerPosition] = React.useState<[number, number] | null>(null);
+  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
 
   const MapClickHandler = () => {
     useMapEvents({
       click(e) {
-        // Always move the pin if isDroppingPin is true
-        if (isDroppingPin) {
+        if (isDroppingPin) {  // Check if we are in pin-dropping mode
           const { lat, lng } = e.latlng;
-          setMarkerPosition([lat, lng]);  // Update the marker position on map click
-          onMapClick({ lat, lng });  // Pass the lat/lng coordinates to the parent component
+          setMarkerPosition([lat, lng]);  // Set marker position when clicked
+          onMapClick({ lat, lng });  // Pass the lat/lng to the parent (App)
         }
       }
     });
@@ -33,7 +32,7 @@ const Map = ({ onMapClick, isDroppingPin }) => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
 
-        {/* Conditionally render the marker only if a pin has been dropped */}
+        {/* Render marker if a position is available */}
         {markerPosition && (
           <Marker position={markerPosition}>
             <Popup>
@@ -42,7 +41,7 @@ const Map = ({ onMapClick, isDroppingPin }) => {
           </Marker>
         )}
 
-        {/* Enable map click events */}
+        {/* Handle map click events */}
         <MapClickHandler />
       </MapContainer>
     </div>
@@ -50,4 +49,5 @@ const Map = ({ onMapClick, isDroppingPin }) => {
 };
 
 export default Map;
+
 
