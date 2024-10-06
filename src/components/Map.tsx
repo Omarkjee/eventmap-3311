@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, Popup } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import './Map.css';  // Assuming you have basic CSS for layout
+import './Map.css';
 
-const Map = ({ onMapClick, isDroppingPin }) => {
+const Map = ({ onMapClick, isDroppingPin }: { onMapClick: (coords: { lat: number, lng: number }) => void, isDroppingPin: boolean }) => {
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
 
   const MapClickHandler = () => {
     useMapEvents({
-      click(e) {
-        if (isDroppingPin) {  // Check if we are in pin-dropping mode
+      click(e: L.LeafletMouseEvent) {  // Ensure `e` is typed correctly for Leaflet events
+        if (isDroppingPin) {
           const { lat, lng } = e.latlng;
           setMarkerPosition([lat, lng]);  // Set marker position when clicked
           onMapClick({ lat, lng });  // Pass the lat/lng to the parent (App)
@@ -49,5 +50,3 @@ const Map = ({ onMapClick, isDroppingPin }) => {
 };
 
 export default Map;
-
-

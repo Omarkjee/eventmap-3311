@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { createEvent } from '../utils/firebaseEvents';
 
-const HostEvent = ({ setIsDroppingPin, eventLocation }) => {
+const HostEvent = ({ setIsDroppingPin, eventLocation }: { setIsDroppingPin: React.Dispatch<React.SetStateAction<boolean>>,
+    eventLocation: { lat: number; lng: number } }) => {
   const [eventDetails, setEventDetails] = useState({
     title: '',
     description: '',
@@ -30,13 +31,15 @@ const HostEvent = ({ setIsDroppingPin, eventLocation }) => {
         alert("Please fill out all required fields and drop a pin on the map.");
         return;
       }
-
-      // Set the latitude and longitude from the dropped pin
-      await createEvent({
+  
+      // Create a new event without passing `id`
+      const newEvent = {
         ...eventDetails,
         latitude: eventLocation.lat,
-        longitude: eventLocation.lng
-      });
+        longitude: eventLocation.lng,
+      };
+  
+      await createEvent(newEvent);  // Pass newEvent without id
       alert("Event created successfully!");
     } catch (error: any) {
       alert("Error creating event: " + error.message);

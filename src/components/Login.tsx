@@ -4,7 +4,7 @@ import { signIn } from '../utils/firebaseAuth';  // Import signIn function from 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,7 +14,7 @@ const Login = () => {
       alert("Login successful!");
       // Redirect user to the main part of your app after login
     } catch (error) {
-      setError(error.message);
+      setError((error as Error).message);
     }
   };
 

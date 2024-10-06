@@ -1,11 +1,10 @@
 import { app } from './firebaseConfig';
 import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, getDocs, Timestamp } from 'firebase/firestore';
 
-
 const db = getFirestore(app);
 
-type EventDetails = {
-  id?: string;  // Make id optional for events, only available when fetched from the database
+export type EventDetails = {
+  id: string;
   title: string;
   description: string;
   start_time: Date | string;
@@ -20,7 +19,7 @@ type EventDetails = {
 };
 
 // Create Event
-export const createEvent = async (eventDetails: EventDetails): Promise<string> => {
+export const createEvent = async (eventDetails: Omit<EventDetails, 'id'>): Promise<string> => {
   try {
     const eventRef = await addDoc(collection(db, 'events'), {
       title: eventDetails.title,
@@ -44,7 +43,6 @@ export const createEvent = async (eventDetails: EventDetails): Promise<string> =
     throw error;
   }
 };
-
 // Fetch All Events
 export const fetchEvents = async (): Promise<EventDetails[]> => {
   try {
@@ -53,22 +51,20 @@ export const fetchEvents = async (): Promise<EventDetails[]> => {
 
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-
       const event: EventDetails = {
-        id: doc.id,  // Store Firestore document ID separately
-        title: data.title || '',
-        description: data.description || '',
-        start_time: data.start_time.toDate() || '',  // Convert Timestamp to Date
-        end_time: data.end_time.toDate() || '',      // Convert Timestamp to Date
-        location_info: data.location_info || '',
-        latitude: data.latitude || 0,
-        longitude: data.longitude || 0,
-        is_private: data.is_private || false,
-        is_RSVPable: data.is_RSVPable || false,
-        invite_emails: data.invite_emails || [],
-        host_id: data.host_id || '',
+        id: doc.id,
+        title: data.title ?? '',
+        description: data.description ?? '',
+        start_time: data.start_time?.toDate() ?? '',  // Optional chaining with Timestamp conversion
+        end_time: data.end_time?.toDate() ?? '',
+        location_info: data.location_info ?? '',
+        latitude: data.latitude ?? 0,  // Use default values
+        longitude: data.longitude ?? 0,
+        is_private: data.is_private ?? false,
+        is_RSVPable: data.is_RSVPable ?? false,
+        invite_emails: data.invite_emails ?? [],
+        host_id: data.host_id ?? '',
       };
-
       events.push(event);
     });
 
@@ -89,17 +85,17 @@ export const fetchEventById = async (eventId: string): Promise<EventDetails | nu
       const data = eventSnap.data();
       return {
         id: eventSnap.id,
-        title: data.title || '',
-        description: data.description || '',
-        start_time: data.start_time.toDate() || '',
-        end_time: data.end_time.toDate() || '',
-        location_info: data.location_info || '',
-        latitude: data.latitude || 0,
-        longitude: data.longitude || 0,
-        is_private: data.is_private || false,
-        is_RSVPable: data.is_RSVPable || false,
-        invite_emails: data.invite_emails || [],
-        host_id: data.host_id || '',
+        title: data?.title ?? '',
+        description: data?.description ?? '',
+        start_time: data?.start_time?.toDate() ?? '',
+        end_time: data?.end_time?.toDate() ?? '',
+        location_info: data?.location_info ?? '',
+        latitude: data?.latitude ?? 0,
+        longitude: data?.longitude ?? 0,
+        is_private: data?.is_private ?? false,
+        is_RSVPable: data?.is_RSVPable ?? false,
+        invite_emails: data?.invite_emails ?? [],
+        host_id: data?.host_id ?? '',
       };
     } else {
       console.error("Event not found");

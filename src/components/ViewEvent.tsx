@@ -1,8 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchEventById } from '../utils/firebaseEvents'; // Assuming you have this function to fetch one event
 
-const ViewEvent = ({ eventId }) => {
-  const [event, setEvent] = useState(null);
+interface EventDetails {
+  title: string;
+  description: string;
+  location_info: string;
+  start_time: Date | string;
+  end_time: Date | string;
+  host_id: string;
+  is_private: boolean;
+  invite_emails: string[];
+}
+
+interface ViewEventProps {
+  eventId: string;  // Assume eventId is a string
+}
+
+const ViewEvent = ({ eventId }: ViewEventProps) => {
+  const [event, setEvent] = useState<EventDetails | null>(null);  // event is either EventDetails or null
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -28,7 +43,6 @@ const ViewEvent = ({ eventId }) => {
       <p><strong>End Time:</strong> {new Date(event.end_time).toLocaleString()}</p>
       <p><strong>Host ID:</strong> {event.host_id}</p>
 
-      {/* Show additional info, such as contact details, RSVP list, etc. */}
       {event.is_private && (
         <p><strong>Invitees:</strong> {event.invite_emails.join(', ')}</p>
       )}
@@ -37,3 +51,4 @@ const ViewEvent = ({ eventId }) => {
 };
 
 export default ViewEvent;
+

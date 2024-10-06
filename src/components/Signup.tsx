@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import './Signup.css';
 import { signUp } from '../utils/firebaseAuth';  // Import the signUp function from firebaseAuth.js
 
+
 const Signup = () => {
   // State for form inputs
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null); // For error handling
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();  // Prevent page reload
@@ -16,7 +17,7 @@ const Signup = () => {
       await signUp(email, password);
       alert("Sign up successful! Please check your email for verification.");
     } catch (error) {
-      setError(error.message);  // Set error message if sign-up fails
+      setError((error as Error).message);  // Set error message if sign-up fails
     }
   };
 

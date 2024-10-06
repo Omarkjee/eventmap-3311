@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { fetchEvents } from '../utils/firebaseEvents';
+import { useState, useEffect } from 'react';
+import { fetchEvents, EventDetails } from '../utils/firebaseEvents';  // Ensure EventDetails is imported
 
-const EventsList = ({ viewEvent }) => {
-  const [currentEvents, setCurrentEvents] = useState([]);
-  const [upcomingEvents, setUpcomingEvents] = useState([]);
+// Define the type for viewEvent function
+interface EventsListProps {
+  viewEvent: (eventId: string) => void;
+}
+
+const EventsList: React.FC<EventsListProps> = ({ viewEvent }) => {
+  const [currentEvents, setCurrentEvents] = useState<EventDetails[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<EventDetails[]>([]);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -30,20 +35,24 @@ const EventsList = ({ viewEvent }) => {
       <h2>Current Events</h2>
       <ul>
         {currentEvents.map(event => (
-          <li key={event.id}>
-            <button onClick={() => viewEvent(event.id)}>{event.title}</button>
-            <p>{new Date(event.start_time).toLocaleString()} - {new Date(event.end_time).toLocaleString()}</p>
-          </li>
+          event.id ? (
+            <li key={event.id}>
+              <button onClick={() => viewEvent(event.id)}>{event.title}</button>
+              <p>{new Date(event.start_time).toLocaleString()} - {new Date(event.end_time).toLocaleString()}</p>
+            </li>
+          ) : null
         ))}
       </ul>
 
       <h2>Upcoming Events</h2>
       <ul>
         {upcomingEvents.map(event => (
-          <li key={event.id}>
-            <button onClick={() => viewEvent(event.id)}>{event.title}</button>
-            <p>{new Date(event.start_time).toLocaleString()} - {new Date(event.end_time).toLocaleString()}</p>
-          </li>
+          event.id ? (
+            <li key={event.id}>
+              <button onClick={() => viewEvent(event.id)}>{event.title}</button>
+              <p>{new Date(event.start_time).toLocaleString()} - {new Date(event.end_time).toLocaleString()}</p>
+            </li>
+          ) : null
         ))}
       </ul>
     </div>
