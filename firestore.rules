@@ -1,19 +1,39 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // This rule allows anyone with your Firestore database reference to view, edit,
-    // and delete all data in your Firestore database. It is useful for getting
-    // started, but it is configured to expire after 30 days because it
-    // leaves your app open to attackers. At that time, all client
-    // requests to your Firestore database will be denied.
-    //
-    // Make sure to write security rules for your app before that time, or else
-    // all client requests to your Firestore database will be denied until you Update
-    // your rules
-    match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2024, 10, 16);
+    // Events Collection
+    match /events/{eventId} {
+
+      // Allow any user (authenticated or not) to view public events
+      allow read: if resource.data.private == false;
+
+      // Allow only authenticated invited users to view private events
+      allow read: if request.auth != null && request.auth.token.email in resource.data.invitedUsers;
+
+
+      // Allow only authenticated users to create events
+      allow create: if request.auth != null && request.auth.token.email_verified == true;
+
+
+      // Allow only the event creator to update or delete their own events
+      allow update, delete: if request.auth != null &&
+          resource.data.creatorId == request.auth.uid;
+
+      // Automatically delete events some time after the event ends
+      // This will require a Cloud Function to trigger based on event end time.
+    }
+
+    // RSVP Collection (inside each event)
+    match /events/{eventId}/rsvps/{rsvpId} {
+
+      // Allow only authenticated users to RSVP
+      allow create: if request.auth != null && request.auth.token.email_verified == true;
+
+
+      // Allow users to delete their own RSVP
+      allow delete: if resource.data.userId == request.auth.uid;
     }
   }
 }
+
