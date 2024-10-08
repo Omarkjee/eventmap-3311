@@ -1,8 +1,16 @@
-.map {
-  width: 100%;
-  height: 100%;
-  background-color: lightgray;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+/*!* Ensure the map container takes full width and height *!*/
+/*.map {*/
+/*  width: 100%;*/
+/*  height: 100%; !* Full height *!*/
+/*  position: relative;*/
+/*}*/
+
+/*!* Ensure the Leaflet map takes up the entire container *!*/
+/*.leaflet-container {*/
+/*  width: 100%;*/
+/*  height: 100%; !* Ensures the Leaflet map fills the available space *!*/
+/*  display: flex;*/
+/*  justify-content: center;*/
+/*  align-items: center;*/
+/*}*/
+
