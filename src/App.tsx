@@ -68,19 +68,19 @@ function App() {
   };
 
   return (
-      <Container maxWidth="xl">  {/* Container for overall layout */}
+      <Container maxWidth="xl">
         <NavBar onNavClick={handleNavClick} isAuthenticated={isAuthenticated} />
-        <Grid container spacing={2}>  {/* Grid layout to replace flex */}
-          {/* Left side: Dynamic UI */}
-          <Grid item xs={12} md={4}>  {/* Full width on mobile, 4/12 on medium screens */}
-            <Box sx={{ p: 2, bgcolor: 'grey.100', height: '100vh', overflowY: 'auto' }}>
+        <Grid container spacing={2}>
+          {/* Left Side: Dynamic UI */}
+          <Grid item xs={12} md={4}>
+            <Box sx={{ p: 2, bgcolor: 'grey.100', height: { xs: '50vh', md: '100vh' }, overflowY: 'auto' }}>
               {renderActiveSection()}
             </Box>
           </Grid>
 
-          {/* Right side: Map */}
-          <Grid item xs={12} md={8}>  {/* Full width on mobile, 8/12 on medium screens */}
-            <Box sx={{ p: 2, height: '100vh' }}>
+          {/* Right Side: Map */}
+          <Grid item xs={12} md={8}>
+            <Box sx={{ p: 2, height: { xs: '50vh', md: '100vh' } }}>
               <Map isDroppingPin={isDroppingPin} onMapClick={handleMapClick} />
             </Box>
           </Grid>
