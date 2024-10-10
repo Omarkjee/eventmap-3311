@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import './Map.css';
+//import './Map.css';
 
 const Map = ({ onMapClick, isDroppingPin }: { onMapClick: (coords: { lat: number, lng: number }) => void, isDroppingPin: boolean }) => {
   const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);

@@ -19,7 +19,19 @@ export type EventDetails = {
 };
 
 // Create Event
-export const createEvent = async (eventDetails: Omit<EventDetails, 'id'>): Promise<string> => {
+export const createEvent = async (eventDetails: {
+    is_private: boolean;
+    start_time: string;
+    is_RSVPable: boolean;
+    invite_emails: string;
+    latitude: number;
+    end_time: string;
+    description: string;
+    title: string;
+    location_info: string;
+    host_id: string;
+    longitude: number
+}): Promise<string> => {
   try {
     const eventRef = await addDoc(collection(db, 'events'), {
       title: eventDetails.title,
