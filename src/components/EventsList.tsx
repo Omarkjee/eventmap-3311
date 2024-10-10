@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { fetchEvents, EventDetails } from '../utils/firebaseEvents';  // Ensure EventDetails is imported
+import React, { useState, useEffect } from 'react';
+import { fetchEvents, EventDetails } from '../utils/firebaseEvents';
+import { Box, Typography, List, ListItem, ListItemText, Button, useMediaQuery, useTheme, Tabs, Tab } from '@mui/material';
 
-// Define the type for viewEvent function
 interface EventsListProps {
     viewEvent: (eventId: string) => void;
 }
@@ -9,14 +9,16 @@ interface EventsListProps {
 const EventsList: React.FC<EventsListProps> = ({ viewEvent }) => {
     const [currentEvents, setCurrentEvents] = useState<EventDetails[]>([]);
     const [upcomingEvents, setUpcomingEvents] = useState<EventDetails[]>([]);
+    const [activeTab, setActiveTab] = useState(0); // New state for controlling tabs
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md')); // Adjust layout for mobile
 
     useEffect(() => {
         const loadEvents = async () => {
             try {
                 const events = await fetchEvents();
-
                 const now = new Date();
-
                 const current = events.filter(event => new Date(event.start_time) <= now && new Date(event.end_time) >= now);
                 const upcoming = events.filter(event => new Date(event.start_time) > now);
 
@@ -26,44 +28,87 @@ const EventsList: React.FC<EventsListProps> = ({ viewEvent }) => {
                 console.error("Error fetching events:", error);
             }
         };
-
         loadEvents();
     }, []);
 
-    return (
-        <div className="bg-gray-50 p-6 rounded-md shadow-md">  {/* Updated with Tailwind classes */}
-            <h2 className="text-2xl font-semibold mb-4">Current Events</h2>
-            <ul className="space-y-4">  {/* Adds vertical spacing between event items */}
-                {currentEvents.map(event => (
-                    event.id ? (
-                        <li key={event.id} className="border p-4 rounded-md hover:bg-gray-100 cursor-pointer"> {/* Adds hover and padding */}
-                            <button onClick={() => viewEvent(event.id)} className="text-lg font-medium text-blue-600 hover:underline">
-                                {event.title}
-                            </button>
-                            <p className="text-sm text-gray-600">
-                                {new Date(event.start_time).toLocaleString()} - {new Date(event.end_time).toLocaleString()}
-                            </p>
-                        </li>
-                    ) : null
-                ))}
-            </ul>
+    const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
+        setActiveTab(newValue);
+    };
 
-            <h2 className="text-2xl font-semibold mt-6 mb-4">Upcoming Events</h2>
-            <ul className="space-y-4">  {/* Adds vertical spacing between upcoming event items */}
-                {upcomingEvents.map(event => (
-                    event.id ? (
-                        <li key={event.id} className="border p-4 rounded-md hover:bg-gray-100 cursor-pointer">
-                            <button onClick={() => viewEvent(event.id)} className="text-lg font-medium text-blue-600 hover:underline">
-                                {event.title}
-                            </button>
-                            <p className="text-sm text-gray-600">
-                                {new Date(event.start_time).toLocaleString()} - {new Date(event.end_time).toLocaleString()}
-                            </p>
-                        </li>
-                    ) : null
+    const renderEventList = (events: EventDetails[]) => (
+        <Box
+            sx={{
+                maxHeight: isMobile ? '150px' : '300px', // Dynamic height
+                overflowY: 'auto',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                p: 1,
+            }}
+        >
+            <List>
+                {events.map((event) => (
+                    <ListItem key={event.id} sx={{ borderBottom: '1px solid #ddd' }}>
+                        <ListItemText
+                            primary={
+                                <Button onClick={() => viewEvent(event.id)} sx={{ textTransform: 'none' }}>
+                                    {event.title}
+                                </Button>
+                            }
+                            secondary={`${new Date(event.start_time).toLocaleString()} - ${new Date(event.end_time).toLocaleString()}`}
+                        />
+                    </ListItem>
                 ))}
-            </ul>
-        </div>
+            </List>
+        </Box>
+    );
+
+    return (
+        <Box p={2} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {isMobile ? (
+                <>
+                    {/* Tabs for mobile view */}
+                    <Tabs value={activeTab} onChange={handleTabChange} centered>
+                        <Tab label="Current" />
+                        <Tab label="Upcoming" />
+                    </Tabs>
+
+                    {/* Render the active tab content */}
+                    {activeTab === 0 && (
+                        <>
+                            <Typography variant="h5" gutterBottom>
+                                Current Events
+                            </Typography>
+                            {renderEventList(currentEvents)}
+                        </>
+                    )}
+                    {activeTab === 1 && (
+                        <>
+                            <Typography variant="h5" gutterBottom>
+                                Upcoming Events
+                            </Typography>
+                            {renderEventList(upcomingEvents)}
+                        </>
+                    )}
+                </>
+            ) : (
+                <>
+                    {/* Standard layout for larger screens */}
+                    <Box>
+                        <Typography variant="h5" gutterBottom>
+                            Current Events
+                        </Typography>
+                        {renderEventList(currentEvents)}
+                    </Box>
+
+                    <Box>
+                        <Typography variant="h5" gutterBottom>
+                            Upcoming Events
+                        </Typography>
+                        {renderEventList(upcomingEvents)}
+                    </Box>
+                </>
+            )}
+        </Box>
     );
 };
 
