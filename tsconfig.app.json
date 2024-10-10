@@ -20,5 +20,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src/**/*"],  // Explicitly include all TypeScript and JSX files in 'src'
+  "exclude": ["node_modules"]  // Exclude 'node_modules' to avoid TypeScript scanning it
 }

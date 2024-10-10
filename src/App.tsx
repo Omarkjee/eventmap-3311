@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Banner from './components/Banner';
+import { Container, Grid, Box } from '@mui/material';  // Import MUI components
 import NavBar from './components/NavBar';
 import Map from './components/Map';
 import EventsList from './components/EventsList';
@@ -39,6 +39,10 @@ function App() {
     setSelectedEventId(eventId);
   };
 
+  const handleMapClick = (latLng: { lat: number; lng: number }) => {
+    setEventLocation(latLng);  // Set the location where the pin is dropped
+  };
+
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'events':
@@ -63,26 +67,25 @@ function App() {
     }
   };
 
-  const handleMapClick = (latLng: { lat: number; lng: number }) => {
-    setEventLocation(latLng);
-  };
-
   return (
-      <div className="flex flex-col h-screen">  {/* Apply Tailwind flexbox and full-screen height */}
-        <Banner />
+      <Container maxWidth="xl">  {/* Container for overall layout */}
         <NavBar onNavClick={handleNavClick} isAuthenticated={isAuthenticated} />
-        <div className="flex flex-grow">  {/* Flexbox for main content */}
-          <div className="w-full md:w-1/3 p-4">  {/* Full width on mobile, 1/3 width on larger screens */}
-            {renderActiveSection()}
-          </div>
-          <div className="w-full md:w-2/3 h-full">  {/* Full width on mobile, 2/3 width on larger screens */}
-            <Map
-                isDroppingPin={isDroppingPin}
-                onMapClick={handleMapClick}
-            />
-          </div>
-        </div>
-      </div>
+        <Grid container spacing={2}>  {/* Grid layout to replace flex */}
+          {/* Left side: Dynamic UI */}
+          <Grid item xs={12} md={4}>  {/* Full width on mobile, 4/12 on medium screens */}
+            <Box sx={{ p: 2, bgcolor: 'grey.100', height: '100vh', overflowY: 'auto' }}>
+              {renderActiveSection()}
+            </Box>
+          </Grid>
+
+          {/* Right side: Map */}
+          <Grid item xs={12} md={8}>  {/* Full width on mobile, 8/12 on medium screens */}
+            <Box sx={{ p: 2, height: '100vh' }}>
+              <Map isDroppingPin={isDroppingPin} onMapClick={handleMapClick} />
+            </Box>
+          </Grid>
+        </Grid>
+      </Container>
   );
 }
 
