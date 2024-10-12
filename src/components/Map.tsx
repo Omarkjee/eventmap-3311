@@ -21,13 +21,15 @@ const Map = ({
   const [selectedPin, setSelectedPin] = useState<string | null>(null);  // Keep track of the selected pin
 
   // Custom icons for default and highlighted pins
-  const defaultIcon = new L.Icon.Default({
-    iconUrl: 'path-to-default-pin.png',  // Replace with the actual path to default pin
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
-  });
+    const defaultIcon = new L.Icon({
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+    });
+
 
   const highlightedIcon = new L.Icon({
     iconUrl: 'src/assets/yellowPin.png',  // Replace with the actual path to highlighted pin
