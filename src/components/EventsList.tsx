@@ -1,44 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { fetchEvents, EventDetails } from '../utils/firebaseEvents';
+import { useState } from 'react';
+import { EventDetails } from '../utils/firebaseEvents';
 import { Box, Typography, List, ListItem, ListItemText, Button, useMediaQuery, useTheme, Tabs, Tab } from '@mui/material';
 
 interface EventsListProps {
     viewEvent: (eventId: string) => void;
+    events: EventDetails[];  // Ensure events are passed as a prop
 }
 
-const EventsList: React.FC<EventsListProps> = ({ viewEvent }) => {
-    const [currentEvents, setCurrentEvents] = useState<EventDetails[]>([]);
-    const [upcomingEvents, setUpcomingEvents] = useState<EventDetails[]>([]);
-    const [activeTab, setActiveTab] = useState(0); // New state for controlling tabs
+const EventsList: React.FC<EventsListProps> = ({ viewEvent, events }) => {
+    const [activeTab, setActiveTab] = useState(0);  // New state for controlling tabs
 
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md')); // Adjust layout for mobile
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));  // Adjust layout for mobile
 
-    useEffect(() => {
-        const loadEvents = async () => {
-            try {
-                const events = await fetchEvents();
-                const now = new Date();
-                const current = events.filter(event => new Date(event.start_time) <= now && new Date(event.end_time) >= now);
-                const upcoming = events.filter(event => new Date(event.start_time) > now);
-
-                setCurrentEvents(current);
-                setUpcomingEvents(upcoming);
-            } catch (error) {
-                console.error("Error fetching events:", error);
-            }
-        };
-        loadEvents();
-    }, []);
+    // Split events into current and upcoming based on the time
+    const now = new Date();
+    const currentEvents = events.filter(event => new Date(event.start_time) <= now && new Date(event.end_time) >= now);
+    const upcomingEvents = events.filter(event => new Date(event.start_time) > now);
 
     const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
         setActiveTab(newValue);
     };
 
-    const renderEventList = (events: EventDetails[]) => (
+    const renderEventList = (eventList: EventDetails[]) => (
         <Box
             sx={{
-                maxHeight: isMobile ? '150px' : '300px', // Dynamic height
+                maxHeight: isMobile ? '150px' : '300px',  // Dynamic height
                 overflowY: 'auto',
                 border: '1px solid #ddd',
                 borderRadius: '8px',
@@ -46,7 +33,7 @@ const EventsList: React.FC<EventsListProps> = ({ viewEvent }) => {
             }}
         >
             <List>
-                {events.map((event) => (
+                {eventList.map(event => (
                     <ListItem key={event.id} sx={{ borderBottom: '1px solid #ddd' }}>
                         <ListItemText
                             primary={
@@ -113,3 +100,4 @@ const EventsList: React.FC<EventsListProps> = ({ viewEvent }) => {
 };
 
 export default EventsList;
+

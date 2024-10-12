@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Container, Grid, Box } from '@mui/material';  // Import MUI components
+import { Container, Grid, Box } from '@mui/material';
 import NavBar from './components/NavBar';
 import Map from './components/Map';
 import EventsList from './components/EventsList';
@@ -11,6 +11,7 @@ import HostEvent from './components/HostEvent';
 import ViewEvent from './components/ViewEvent';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { logOut } from './utils/firebaseAuth';
+import {EventDetails, fetchEvents} from './utils/firebaseEvents';  // Assuming this exists
 
 function App() {
   const [activeSection, setActiveSection] = useState<string>('events');
@@ -18,6 +19,19 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isDroppingPin, setIsDroppingPin] = useState(false);
   const [eventLocation, setEventLocation] = useState({ lat: 0, lng: 0 });
+  const [events, setEvents] = useState<EventDetails[]>([]);  // Store fetched events
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        const fetchedEvents = await fetchEvents();  // Fetch events from your database
+        setEvents(fetchedEvents);
+      } catch (error) {
+        console.error("Error fetching events: ", error);
+      }
+    };
+    loadEvents();
+  }, []);
 
   useEffect(() => {
     const auth = getAuth();
@@ -36,7 +50,7 @@ function App() {
 
   const viewEvent = (eventId: string) => {
     setActiveSection('viewEvent');
-    setSelectedEventId(eventId);
+    setSelectedEventId(eventId);  // Highlight the selected event on the map
   };
 
   const handleMapClick = (latLng: { lat: number; lng: number }) => {
@@ -46,7 +60,7 @@ function App() {
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'events':
-        return <EventsList viewEvent={viewEvent} />;
+        return <EventsList viewEvent={viewEvent} events={events} />;
       case 'friends':
         return <FriendsList />;
       case 'login':
@@ -63,7 +77,7 @@ function App() {
         logOut();
         return null;
       default:
-        return <EventsList viewEvent={viewEvent} />;
+        return <EventsList viewEvent={viewEvent} events={events} />;
     }
   };
 
@@ -81,7 +95,12 @@ function App() {
           {/* Right Side: Map */}
           <Grid item xs={12} md={8}>
             <Box sx={{ p: 2, height: { xs: '50vh', md: '100vh' } }}>
-              <Map isDroppingPin={isDroppingPin} onMapClick={handleMapClick} />
+              <Map
+                  events={events}
+                  selectedEventId={selectedEventId}  // Highlight selected event on the map
+                  isDroppingPin={isDroppingPin}
+                  onMapClick={handleMapClick}
+              />
             </Box>
           </Grid>
         </Grid>
