@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Container, Grid, Box } from '@mui/material';
 import NavBar from './components/NavBar';
 import Map from './components/Map';
@@ -11,7 +12,7 @@ import HostEvent from './components/HostEvent';
 import ViewEvent from './components/ViewEvent';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { logOut } from './utils/firebaseAuth';
-import {EventDetails, fetchEvents} from './utils/firebaseEvents';  // Assuming this exists
+import { EventDetails, fetchEvents } from './utils/firebaseEvents';
 
 function App() {
   const [activeSection, setActiveSection] = useState<string>('events');
@@ -19,13 +20,16 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isDroppingPin, setIsDroppingPin] = useState(false);
   const [eventLocation, setEventLocation] = useState({ lat: 0, lng: 0 });
-  const [events, setEvents] = useState<EventDetails[]>([]);  // Store fetched events
+  const [events, setEvents] = useState<EventDetails[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadEvents = async () => {
       try {
-        const fetchedEvents = await fetchEvents();  // Fetch events from your database
-        setEvents(fetchedEvents);
+        const fetchedEvents = await fetchEvents();
+        const now = new Date();
+        const currentAndUpcomingEvents = fetchedEvents.filter(event => new Date(event.end_time) >= now);
+        setEvents(currentAndUpcomingEvents);
       } catch (error) {
         console.error("Error fetching events: ", error);
       }
@@ -50,11 +54,23 @@ function App() {
 
   const viewEvent = (eventId: string) => {
     setActiveSection('viewEvent');
-    setSelectedEventId(eventId);  // Highlight the selected event on the map
+    setSelectedEventId(eventId);
   };
 
   const handleMapClick = (latLng: { lat: number; lng: number }) => {
-    setEventLocation(latLng);  // Set the location where the pin is dropped
+    setEventLocation(latLng);
+  };
+
+  const handleLogout = async () => {
+    await logOut();
+    alert("Logout successful!");
+    setActiveSection("events");
+    navigate('/events');  // Redirect to event list after logout
+
+    // Fallback to ensure redirection in case navigate does not work as expected
+    setTimeout(() => {
+      window.location.href = '/events';
+    }, 100);
   };
 
   const renderActiveSection = () => {
@@ -73,9 +89,6 @@ function App() {
         return <HostEvent setIsDroppingPin={setIsDroppingPin} eventLocation={eventLocation} />;
       case 'viewEvent':
         return selectedEventId ? <ViewEvent eventId={selectedEventId} /> : null;
-      case 'logout':
-        logOut();
-        return null;
       default:
         return <EventsList viewEvent={viewEvent} events={events} />;
     }
@@ -83,23 +96,22 @@ function App() {
 
   return (
       <Container maxWidth="xl">
-        <NavBar onNavClick={handleNavClick} isAuthenticated={isAuthenticated} />
+        <NavBar onNavClick={handleNavClick} onLogout={handleLogout} isAuthenticated={isAuthenticated} />
         <Grid container spacing={2}>
-          {/* Left Side: Dynamic UI */}
           <Grid item xs={12} md={4}>
             <Box sx={{ p: 2, bgcolor: 'grey.100', height: { xs: '50vh', md: '100vh' }, overflowY: 'auto' }}>
               {renderActiveSection()}
             </Box>
           </Grid>
 
-          {/* Right Side: Map */}
           <Grid item xs={12} md={8}>
             <Box sx={{ p: 2, height: { xs: '50vh', md: '100vh' } }}>
               <Map
                   events={events}
-                  selectedEventId={selectedEventId}  // Highlight selected event on the map
+                  selectedEventId={selectedEventId}
                   isDroppingPin={isDroppingPin}
                   onMapClick={handleMapClick}
+                  viewEvent={viewEvent}
               />
             </Box>
           </Grid>
@@ -109,3 +121,4 @@ function App() {
 }
 
 export default App;
+

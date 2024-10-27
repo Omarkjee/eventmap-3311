@@ -35,11 +35,12 @@ export const signUp = async (email: string, password: string, displayName: strin
 
     // Send verification email
     await sendEmailVerification(user);
-    console.log("User registered and verification email sent:", user);
 
-    alert("Verification email sent! Please check your inbox to verify your email.");
+    // Immediately sign out to prevent automatic login
+    await signOut(auth);
   } catch (error: any) {
     console.error("Error registering user:", error.message);
+    throw new Error("Sign up failed: " + error.message);  // Forward error to be handled in Signup.tsx
   }
 };
 
@@ -51,6 +52,7 @@ export const signIn = async (email: string, password: string): Promise<void> => 
 
     if (user.emailVerified) {
       console.log("User signed in and email verified:", user);
+      alert("Login successful!");
     } else {
       alert("Your email is not verified. Please check your inbox to verify your email.");
 
@@ -60,10 +62,11 @@ export const signIn = async (email: string, password: string): Promise<void> => 
         alert("Verification email sent again. Please check your inbox.");
       }
 
-      await signOut(auth);
+      await signOut(auth);  // Ensure user is signed out if they haven't verified
     }
   } catch (error: any) {
     console.error("Error signing in:", error.message);
+    alert("Login failed: " + error.message);
   }
 };
 

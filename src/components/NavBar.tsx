@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { AppBar, Toolbar, Button, Typography, IconButton, Drawer, List, ListItem, ListItemText } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -6,21 +7,22 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 
 interface NavBarProps {
     onNavClick: (section: string) => void;
+    onLogout: () => void;  // Added onLogout prop
     isAuthenticated: boolean;
 }
 
-const NavBar: React.FC<NavBarProps> = ({ onNavClick, isAuthenticated }) => {
+const NavBar: React.FC<NavBarProps> = ({ onNavClick, onLogout, isAuthenticated }) => {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));  // Detects if the screen is smaller than the "md" breakpoint
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
     const toggleDrawer = (open: boolean) => {
         setDrawerOpen(open);
     };
 
     const handleMenuItemClick = (section: string) => {
-        onNavClick(section);   // Trigger the navigation click
-        setDrawerOpen(false);   // Close the drawer after a menu item is selected
+        onNavClick(section);
+        setDrawerOpen(false);
     };
 
     const menuItems = [
@@ -38,29 +40,26 @@ const NavBar: React.FC<NavBarProps> = ({ onNavClick, isAuthenticated }) => {
                         Campus Banner
                     </Typography>
 
-                    {/* Render based on screen size */}
                     {isMobile ? (
                         <>
-                            {/* Hamburger Icon */}
                             <IconButton edge="start" color="inherit" aria-label="menu" onClick={() => toggleDrawer(true)}>
                                 <MenuIcon />
                             </IconButton>
 
-                            {/* Drawer for mobile screens */}
                             <Drawer anchor="left" open={drawerOpen} onClose={() => toggleDrawer(false)}>
                                 <List>
                                     {menuItems.map((item) => (
                                         <ListItem
                                             key={item.text}
                                             onClick={() => handleMenuItemClick(item.section)}
-                                            component="button" // Explicitly treat as button
+                                            component="button"
                                         >
                                             <ListItemText primary={item.text} />
                                         </ListItem>
                                     ))}
 
                                     {isAuthenticated ? (
-                                        <ListItem onClick={() => handleMenuItemClick('logout')} component="button">
+                                        <ListItem onClick={onLogout} component="button">  {/* Call onLogout directly */}
                                             <ListItemText primary="Logout" />
                                         </ListItem>
                                     ) : (
@@ -78,7 +77,6 @@ const NavBar: React.FC<NavBarProps> = ({ onNavClick, isAuthenticated }) => {
                         </>
                     ) : (
                         <>
-                            {/* Normal menu for larger screens */}
                             {menuItems.map((item) => (
                                 <Button key={item.text} color="inherit" onClick={() => onNavClick(item.section)}>
                                     {item.text}
@@ -86,7 +84,7 @@ const NavBar: React.FC<NavBarProps> = ({ onNavClick, isAuthenticated }) => {
                             ))}
 
                             {isAuthenticated ? (
-                                <Button color="inherit" onClick={() => onNavClick('logout')}>
+                                <Button color="inherit" onClick={onLogout}>  {/* Call onLogout directly */}
                                     Logout
                                 </Button>
                             ) : (
