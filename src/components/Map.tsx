@@ -78,10 +78,15 @@ const Map = ({
             />
 
             <MapContainer
-                center={[32.732, -97.115]}
+                center={[32.728, -97.114]}
                 zoom={16}
+                minZoom={15} 
+                maxZoom={18}
                 scrollWheelZoom={true}
+                doubleClickZoom={true} 
+                zoomControl={true}
                 style={{ height: "100vh", width: "100%" }}
+                maxBounds={[[32.722, -97.125], [32.742, -97.105]]}
             >
                 <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
