@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TextField, Button, Switch, FormControlLabel, Typography, Box } from '@mui/material';
-import { createEvent } from '../utils/firebaseEvents';
+import { createEvent, editEvent, fetchEventById } from '../utils/firebaseEvents';
+import { getAuth } from 'firebase/auth';
 
-const HostEvent = ({ setIsDroppingPin, eventLocation }: { setIsDroppingPin: React.Dispatch<React.SetStateAction<boolean>>, eventLocation: { lat: number; lng: number } }) => {
+const HostEvent = ({ setIsDroppingPin, eventLocation, eventId }: { setIsDroppingPin: React.Dispatch<React.SetStateAction<boolean>>, eventLocation: { lat: number; lng: number }, eventId?: string }) => {
   const [eventDetails, setEventDetails] = useState({
     title: '',
     description: '',
@@ -12,10 +13,27 @@ const HostEvent = ({ setIsDroppingPin, eventLocation }: { setIsDroppingPin: Reac
     latitude: 0,
     longitude: 0,
     is_private: false,
-    is_RSVPable: false,  // Add this field
-    invite_emails: '',
+    is_RSVPable: false,
+    invite_emails: '', // Changed to a string for form compatibility
     host_id: '', // Add the logged-in user's ID here later
   });
+
+  useEffect(() => {
+    if (eventId) {
+      const loadEvent = async () => {
+        const eventData = await fetchEventById(eventId);
+        if (eventData) {
+          setEventDetails({
+            ...eventData,
+            start_time: eventData.start_time.toString().slice(0, 16), // Format for input field
+            end_time: eventData.end_time.toString().slice(0, 16), // Format for input field
+            invite_emails: eventData.invite_emails.join(', ') // Convert array to comma-separated string for input field
+          });
+        }
+      };
+      loadEvent();
+    }
+  }, [eventId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setEventDetails({
@@ -34,12 +52,28 @@ const HostEvent = ({ setIsDroppingPin, eventLocation }: { setIsDroppingPin: Reac
   const handleToggleRSVPable = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEventDetails({
       ...eventDetails,
-      is_RSVPable: e.target.checked   // Handle RSVP toggle
+      is_RSVPable: e.target.checked
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const auth = getAuth();
+    const userId = auth.currentUser ? auth.currentUser.uid : null; // Get the current user ID
+
+    if (!userId) {
+      alert("You must be logged in to create or edit an event.");
+      return; // Prevent submission if not authenticated
+    }
+
+    const oneWeekFromNow = new Date();
+    oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
+
+    if (new Date(eventDetails.start_time) > oneWeekFromNow) {
+      alert("Events can only be created up to 1 week in advance.");
+      return;
+    }
+
     try {
       if (!eventDetails.title || !eventDetails.location_info || !eventLocation.lat || !eventLocation.lng) {
         alert("Please fill out all required fields and drop a pin on the map.");
@@ -50,13 +84,21 @@ const HostEvent = ({ setIsDroppingPin, eventLocation }: { setIsDroppingPin: Reac
         ...eventDetails,
         latitude: eventLocation.lat,
         longitude: eventLocation.lng,
+        host_id: userId, // Set host_id to the authenticated user's ID
+        invite_emails: eventDetails.invite_emails.split(',').map(email => email.trim()) // Convert string back to array
       };
 
-      await createEvent(newEvent);
-      alert("Event created successfully!");
+      if (eventId) {
+        await editEvent(eventId, newEvent);
+        alert("Event updated successfully!");
+      } else {
+        await createEvent(newEvent);
+        alert("Event created successfully!");
+      }
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error(error.message);
+        alert("An error occurred while creating or editing the event. Please try again.");
       }
     }
   };
@@ -64,7 +106,7 @@ const HostEvent = ({ setIsDroppingPin, eventLocation }: { setIsDroppingPin: Reac
   return (
       <Box sx={{ p: 2, maxWidth: '600px', margin: 'auto' }}>
         <Typography variant="h4" gutterBottom>
-          Host an Event
+          {eventId ? "Edit Event" : "Host an Event"}
         </Typography>
 
         <form onSubmit={handleSubmit}>
@@ -162,7 +204,7 @@ const HostEvent = ({ setIsDroppingPin, eventLocation }: { setIsDroppingPin: Reac
               type="submit"
               sx={{ mt: 2 }}
           >
-            Create Event
+            {eventId ? "Update Event" : "Create Event"}
           </Button>
         </form>
       </Box>
