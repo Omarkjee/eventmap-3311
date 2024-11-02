@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { TextField, Button, Switch, FormControlLabel, Typography, Box } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { TextField, Button, Switch, FormControlLabel, Typography, Box, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { createEvent } from '../utils/firebaseEvents';
+import { Filter } from 'bad-words'; // Import the bad-words library
 
 const HostEvent = ({ setIsDroppingPin, eventLocation }: { setIsDroppingPin: React.Dispatch<React.SetStateAction<boolean>>, eventLocation: { lat: number; lng: number } }) => {
   const [eventDetails, setEventDetails] = useState({
@@ -12,15 +13,40 @@ const HostEvent = ({ setIsDroppingPin, eventLocation }: { setIsDroppingPin: Reac
     latitude: 0,
     longitude: 0,
     is_private: false,
-    is_RSVPable: false,  // Add this field
+    is_RSVPable: false,
     invite_emails: '',
-    host_id: '', // Add the logged-in user's ID here later
+    host_id: '',
   });
 
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
+  const filter = new Filter(); // Initialize the filter
+
+  useEffect(() => {
+    if (warningMessage) {
+      const timer = setTimeout(() => {
+        setWarningMessage(null);
+      }, 5000);
+
+      return () => clearTimeout(timer); // Cleanup the timer on unmount or when warningMessage changes
+    }
+  }, [warningMessage]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const value = e.target.value;
+
+    // Check if the input contains any bad words
+    if (filter.isProfane(value)) {
+      setWarningMessage("Your input contains inappropriate language. Please re-enter. Select \"ok\" or wait to clear this message.");
+      setEventDetails({
+        ...eventDetails,
+        [e.target.name]: '' // Clear the input field
+      });
+      return; // Reject the input
+    }
+
     setEventDetails({
       ...eventDetails,
-      [e.target.name]: e.target.value
+      [e.target.name]: value
     });
   };
 
@@ -34,7 +60,7 @@ const HostEvent = ({ setIsDroppingPin, eventLocation }: { setIsDroppingPin: Reac
   const handleToggleRSVPable = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEventDetails({
       ...eventDetails,
-      is_RSVPable: e.target.checked   // Handle RSVP toggle
+      is_RSVPable: e.target.checked
     });
   };
 
@@ -61,111 +87,127 @@ const HostEvent = ({ setIsDroppingPin, eventLocation }: { setIsDroppingPin: Reac
     }
   };
 
+  const handleCloseDialog = () => {
+    setWarningMessage(null);
+  };
+
   return (
-      <Box sx={{ p: 2, maxWidth: '600px', margin: 'auto' }}>
-        <Typography variant="h4" gutterBottom>
-          Host an Event
-        </Typography>
+    <Box sx={{ p: 2, maxWidth: '600px', margin: 'auto' }}>
+      <Typography variant="h4" gutterBottom>
+        Host an Event
+      </Typography>
 
-        <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit}>
+        <TextField
+          fullWidth
+          label="Event Name"
+          name="title"
+          value={eventDetails.title}
+          onChange={handleChange}
+          required
+          margin="normal"
+        />
+
+        <TextField
+          fullWidth
+          label="Location Info"
+          name="location_info"
+          value={eventDetails.location_info}
+          onChange={handleChange}
+          required
+          margin="normal"
+        />
+
+        <TextField
+          fullWidth
+          label="Start Time"
+          type="datetime-local"
+          name="start_time"
+          value={eventDetails.start_time}
+          onChange={handleChange}
+          InputLabelProps={{ shrink: true }}
+          required
+          margin="normal"
+        />
+
+        <TextField
+          fullWidth
+          label="End Time"
+          type="datetime-local"
+          name="end_time"
+          value={eventDetails.end_time}
+          onChange={handleChange}
+          InputLabelProps={{ shrink: true }}
+          required
+          margin="normal"
+        />
+
+        <TextField
+          fullWidth
+          multiline
+          rows={4}
+          label="Description"
+          name="description"
+          value={eventDetails.description}
+          onChange={handleChange}
+          required
+          margin="normal"
+        />
+
+        <FormControlLabel
+          control={<Switch checked={eventDetails.is_private} onChange={handleTogglePrivate} />}
+          label="Make event private"
+        />
+
+        {eventDetails.is_private && (
           <TextField
-              fullWidth
-              label="Event Name"
-              name="title"
-              value={eventDetails.title}
-              onChange={handleChange}
-              required
-              margin="normal"
+            fullWidth
+            label="Invite people via email (comma separated)"
+            name="invite_emails"
+            value={eventDetails.invite_emails}
+            onChange={handleChange}
+            margin="normal"
           />
+        )}
 
-          <TextField
-              fullWidth
-              label="Location Info"
-              name="location_info"
-              value={eventDetails.location_info}
-              onChange={handleChange}
-              required
-              margin="normal"
-          />
+        <FormControlLabel
+          control={<Switch checked={eventDetails.is_RSVPable} onChange={handleToggleRSVPable} />}
+          label="Allow RSVPs"
+        />
 
-          <TextField
-              fullWidth
-              label="Start Time"
-              type="datetime-local"
-              name="start_time"
-              value={eventDetails.start_time}
-              onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
-              required
-              margin="normal"
-          />
+        <Button
+          fullWidth
+          variant="contained"
+          color="primary"
+          sx={{ mt: 2 }}
+          onClick={() => setIsDroppingPin(true)}
+        >
+          Drop Pin on Map
+        </Button>
 
-          <TextField
-              fullWidth
-              label="End Time"
-              type="datetime-local"
-              name="end_time"
-              value={eventDetails.end_time}
-              onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
-              required
-              margin="normal"
-          />
+        <Button
+          fullWidth
+          variant="contained"
+          color="secondary"
+          type="submit"
+          sx={{ mt: 2 }}
+        >
+          Create Event
+        </Button>
+      </form>
 
-          <TextField
-              fullWidth
-              multiline
-              rows={4}
-              label="Description"
-              name="description"
-              value={eventDetails.description}
-              onChange={handleChange}
-              required
-              margin="normal"
-          />
-
-          <FormControlLabel
-              control={<Switch checked={eventDetails.is_private} onChange={handleTogglePrivate} />}
-              label="Make event private"
-          />
-
-          {eventDetails.is_private && (
-              <TextField
-                  fullWidth
-                  label="Invite people via email (comma separated)"
-                  name="invite_emails"
-                  value={eventDetails.invite_emails}
-                  onChange={handleChange}
-                  margin="normal"
-              />
-          )}
-
-          <FormControlLabel
-              control={<Switch checked={eventDetails.is_RSVPable} onChange={handleToggleRSVPable} />}
-              label="Allow RSVPs"
-          />
-
-          <Button
-              fullWidth
-              variant="contained"
-              color="primary"
-              sx={{ mt: 2 }}
-              onClick={() => setIsDroppingPin(true)}
-          >
-            Drop Pin on Map
+      <Dialog open={Boolean(warningMessage)} onClose={handleCloseDialog}>
+        <DialogTitle>Warning</DialogTitle>
+        <DialogContent>
+          <Typography>{warningMessage}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} color="primary">
+            OK
           </Button>
-
-          <Button
-              fullWidth
-              variant="contained"
-              color="secondary"
-              type="submit"
-              sx={{ mt: 2 }}
-          >
-            Create Event
-          </Button>
-        </form>
-      </Box>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 
