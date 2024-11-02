@@ -1,5 +1,5 @@
 import { app } from './firebaseConfig';
-import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, getDocs, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, getDocs, Timestamp, deleteDoc, query, where } from 'firebase/firestore';
 
 const db = getFirestore(app);
 
@@ -20,17 +20,17 @@ export type EventDetails = {
 
 // Create Event
 export const createEvent = async (eventDetails: {
-    is_private: boolean;
-    start_time: string;
-    is_RSVPable: boolean;
-    invite_emails: string;
-    latitude: number;
-    end_time: string;
-    description: string;
-    title: string;
-    location_info: string;
-    host_id: string;
-    longitude: number
+  is_private: boolean;
+  start_time: string;
+  is_RSVPable: boolean;
+  invite_emails: string[];
+  latitude: number;
+  end_time: string;
+  description: string;
+  title: string;
+  location_info: string;
+  host_id: string;
+  longitude: number
 }): Promise<string> => {
   try {
     const eventRef = await addDoc(collection(db, 'events'), {
@@ -55,6 +55,22 @@ export const createEvent = async (eventDetails: {
     throw error;
   }
 };
+
+// Edit Event
+export const editEvent = async (eventId: string, updatedDetails: Partial<EventDetails>): Promise<void> => {
+  try {
+    const eventRef = doc(db, 'events', eventId);
+    await updateDoc(eventRef, {
+      ...updatedDetails,
+      updated_at: Timestamp.now(),
+    });
+    console.log("Event updated:", eventId);
+  } catch (error: any) {
+    console.error("Error updating event:", error);
+    throw error;
+  }
+};
+
 // Fetch All Events
 export const fetchEvents = async (): Promise<EventDetails[]> => {
   try {
@@ -67,10 +83,10 @@ export const fetchEvents = async (): Promise<EventDetails[]> => {
         id: doc.id,
         title: data.title ?? '',
         description: data.description ?? '',
-        start_time: data.start_time?.toDate() ?? '',  // Optional chaining with Timestamp conversion
+        start_time: data.start_time?.toDate() ?? '',
         end_time: data.end_time?.toDate() ?? '',
         location_info: data.location_info ?? '',
-        latitude: data.latitude ?? 0,  // Use default values
+        latitude: data.latitude ?? 0,
         longitude: data.longitude ?? 0,
         is_private: data.is_private ?? false,
         is_RSVPable: data.is_RSVPable ?? false,
@@ -119,44 +135,30 @@ export const fetchEventById = async (eventId: string): Promise<EventDetails | nu
   }
 };
 
-// Edit Event
-export const editEvent = async (eventId: string, updatedDetails: Partial<EventDetails>): Promise<void> => {
+// Delete Event by ID
+export const deleteEvent = async (eventId: string): Promise<void> => {
   try {
-    const eventRef = doc(db, 'events', eventId);
-    await updateDoc(eventRef, {
-      ...updatedDetails,
-      updated_at: Timestamp.now(),
-    });
-    console.log("Event updated:", eventId);
+    await deleteDoc(doc(db, 'events', eventId));
+    console.log("Event deleted with ID:", eventId);
   } catch (error: any) {
-    console.error("Error updating event:", error);
+    console.error("Error deleting event:", error);
     throw error;
   }
 };
 
-// Handle RSVP
-export const handleRSVP = async (eventId: string, userId: string): Promise<void> => {
+// Cleanup old events past their end date
+export const cleanupOldEvents = async (): Promise<void> => {
   try {
-    const rsvpRef = await addDoc(collection(db, 'rsvps'), {
-      event_id: eventId,
-      user_id: userId,
-      rsvp_at: new Date().toISOString(),
-    });
-    console.log("RSVP submitted:", rsvpRef.id);
-  } catch (error: any) {
-    console.error("Error submitting RSVP:", error);
-    throw error;
-  }
-};
+    const now = Timestamp.now();
+    const eventsRef = collection(db, 'events');
+    const oldEventsQuery = query(eventsRef, where('end_time', '<', now));
+    const oldEventsSnapshot = await getDocs(oldEventsQuery);
 
-// Invite Users (placeholder)
-export const inviteUsers = async (eventId: string, inviteEmails: string[]): Promise<void> => {
-  try {
-    inviteEmails.forEach(email => {
-      console.log(`Sent invite to ${email} for event ID: ${eventId}`);
-    });
+    for (const eventDoc of oldEventsSnapshot.docs) {
+      await deleteDoc(eventDoc.ref);
+      console.log("Deleted old event with ID:", eventDoc.id);
+    }
   } catch (error: any) {
-    console.error("Error sending invitations:", error);
-    throw error;
+    console.error("Error cleaning up old events:", error);
   }
 };

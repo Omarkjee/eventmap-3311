@@ -22,6 +22,8 @@ function App() {
   const [eventLocation, setEventLocation] = useState({ lat: 0, lng: 0 });
   const [events, setEvents] = useState<EventDetails[]>([]);
   const navigate = useNavigate();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -41,6 +43,7 @@ function App() {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsAuthenticated(!!user);
+      setCurrentUserId(user ? user.uid : null); // Store the user ID when a user is logged in
     });
     return () => unsubscribe();
   }, []);
@@ -88,7 +91,7 @@ function App() {
       case 'host':
         return <HostEvent setIsDroppingPin={setIsDroppingPin} eventLocation={eventLocation} />;
       case 'viewEvent':
-        return selectedEventId ? <ViewEvent eventId={selectedEventId} /> : null;
+        return selectedEventId ? <ViewEvent eventId={selectedEventId} currentUserId={currentUserId} /> : null;
       default:
         return <EventsList viewEvent={viewEvent} events={events} />;
     }
