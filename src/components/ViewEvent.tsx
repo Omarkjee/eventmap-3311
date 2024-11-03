@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { fetchEventById, deleteEvent } from '../utils/firebaseEvents';
-import { Button, Typography, Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom'; // Assuming react-router is used
+import { Button, Typography, Box, Snackbar, Alert } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { getAuth } from 'firebase/auth'; // Import Firebase auth to get the current user
 
 interface EventDetails {
     id: string;
@@ -10,19 +11,22 @@ interface EventDetails {
     location_info: string;
     start_time: Date | string;
     end_time: Date | string;
-    host_id: string;
+    host_id: string; // This will be used to derive host_email
     is_private: boolean;
     invite_emails: string[];
+    host_email: string; // Added host_email to the EventDetails interface
 }
 
 interface ViewEventProps {
-    eventId: string;  // Assume eventId is a string
-    currentUserId: string | null; // To check if current user is the host
+    eventId: string;
 }
 
-const ViewEvent = ({ eventId, currentUserId }: ViewEventProps) => {
+const ViewEvent = ({ eventId }: ViewEventProps) => {
     const [event, setEvent] = useState<EventDetails | null>(null);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
     const navigate = useNavigate();
+    const auth = getAuth(); // Get the Firebase auth instance
+    const currentUserId = auth.currentUser?.uid; // Get the current user's ID
 
     useEffect(() => {
         const loadEvent = async () => {
@@ -42,17 +46,60 @@ const ViewEvent = ({ eventId, currentUserId }: ViewEventProps) => {
             try {
                 await deleteEvent(eventId);
                 alert("Event deleted successfully!");
-                navigate('/events'); // Redirect after deletion
+                navigate('/events');
             } catch (error) {
                 console.error("Error deleting event:", error);
             }
         }
     };
 
+    const handleCopyLink = () => {
+        const eventUrl = `${window.location.origin}/events/${eventId}`;
+        navigator.clipboard.writeText(eventUrl)
+            .then(() => setSnackbarOpen(true))
+            .catch((error) => console.error("Failed to copy link:", error));
+    };
+
+    const handleShareByEmail = () => {
+        if (event) {
+            const subject = `Check out this event: ${event.title}`;
+            const body = `Here are the details for the event:\n\n` +
+                `Title: ${event.title}\n` +
+                `Description: ${event.description}\n` +
+                `Location: ${event.location_info}\n` +
+                `Start Time: ${new Date(event.start_time).toLocaleString()}\n` +
+                `End Time: ${new Date(event.end_time).toLocaleString()}\n\n` +
+                `You can view more details here: ${window.location.origin}/events/${eventId}`;
+            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+    };
+
+    const handleCloseSnackbar = () => {
+        setSnackbarOpen(false);
+    };
+
     if (!event) return <div>Loading event details...</div>;
 
+    // Extract host from host_email and handle empty cases
+    const hostEmail = event.host_email;
+    const host = hostEmail && hostEmail.includes('@') ? hostEmail.split('@')[0] : 'Unavailable'; // Fallback if host_email is invalid
+
+    // Check if the current user is the host
+    const isHost = currentUserId === event.host_id;
+
     return (
-        <Box sx={{ p: 2, maxWidth: '600px', margin: 'auto' }}>
+        <Box sx={{
+            p: 2,
+            maxWidth: '600px',
+            width: '100%',
+            margin: 'auto',
+            boxSizing: 'border-box',
+            '@media (max-width: 600px)': {
+                padding: '16px',
+                maxWidth: '100%',
+            },
+            // Removed overflow and height restrictions
+        }}>
             <Typography variant="h4" gutterBottom>
                 {event.title}
             </Typography>
@@ -68,8 +115,10 @@ const ViewEvent = ({ eventId, currentUserId }: ViewEventProps) => {
             <Typography variant="body1" paragraph>
                 <strong>End Time:</strong> {new Date(event.end_time).toLocaleString()}
             </Typography>
+
+            {/* Display the host instead of host_email */}
             <Typography variant="body1" paragraph>
-                <strong>Host ID:</strong> {event.host_id}
+                <strong>Host:</strong> {host} {/* Display host without domain */}
             </Typography>
 
             {event.is_private && (
@@ -78,16 +127,32 @@ const ViewEvent = ({ eventId, currentUserId }: ViewEventProps) => {
                 </Typography>
             )}
 
-            {currentUserId && currentUserId === event.host_id && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                    <Button variant="contained" color="primary" onClick={() => navigate(`/edit-event/${eventId}`)}>
-                        Edit Event
-                    </Button>
-                    <Button variant="contained" color="secondary" onClick={handleDelete}>
-                        Delete Event
-                    </Button>
-                </Box>
-            )}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                <Button variant="outlined" onClick={handleCopyLink}>
+                    Copy Event Link
+                </Button>
+                <Button variant="outlined" onClick={handleShareByEmail}>
+                    Share Event via Email
+                </Button>
+
+                {isHost && (
+                    <>
+                        <Button variant="outlined" onClick={() => navigate(`/events/edit/${eventId}`)}>
+                            Edit Event
+                        </Button>
+                        <Button variant="outlined" onClick={handleDelete}>
+                            Delete Event
+                        </Button>
+                    </>
+                )}
+
+            </Box>
+
+            <Snackbar open={snackbarOpen} autoHideDuration={5000} onClose={handleCloseSnackbar}>
+                <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
+                    Event link copied to clipboard!
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

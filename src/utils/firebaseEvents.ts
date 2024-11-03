@@ -1,7 +1,9 @@
 import { app } from './firebaseConfig';
 import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, getDocs, Timestamp, deleteDoc, query, where } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 export type EventDetails = {
   id: string;
@@ -15,7 +17,8 @@ export type EventDetails = {
   is_private: boolean;
   is_RSVPable: boolean;
   invite_emails: string[];
-  host_id: string;
+  host_id: string;       // User ID of the host
+  host_email: string;    // Email of the host
 };
 
 // Create Event
@@ -29,28 +32,27 @@ export const createEvent = async (eventDetails: {
   description: string;
   title: string;
   location_info: string;
-  host_id: string;
-  longitude: number
+  longitude: number;
 }): Promise<string> => {
   try {
+    const user = auth.currentUser;
+    if (!user || !user.email) {
+      throw new Error("User not authenticated or email not available");
+    }
+
     const eventRef = await addDoc(collection(db, 'events'), {
-      title: eventDetails.title,
-      description: eventDetails.description,
+      ...eventDetails,
       start_time: Timestamp.fromDate(new Date(eventDetails.start_time)),
       end_time: Timestamp.fromDate(new Date(eventDetails.end_time)),
-      location_info: eventDetails.location_info,
-      latitude: eventDetails.latitude,
-      longitude: eventDetails.longitude,
-      is_private: eventDetails.is_private,
-      is_RSVPable: eventDetails.is_RSVPable,
       invite_emails: eventDetails.is_private ? eventDetails.invite_emails : [],
-      host_id: eventDetails.host_id,
+      host_id: user.uid,     // Set the host_id to the user's ID
+      host_email: user.email, // Set the host_email to the user's email
       created_at: Timestamp.now(),
       updated_at: Timestamp.now(),
     });
-    console.log("Event created with ID:", eventRef.id);
+
     return eventRef.id;
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error creating event:", error);
     throw error;
   }
@@ -59,13 +61,19 @@ export const createEvent = async (eventDetails: {
 // Edit Event
 export const editEvent = async (eventId: string, updatedDetails: Partial<EventDetails>): Promise<void> => {
   try {
+    const user = auth.currentUser;
     const eventRef = doc(db, 'events', eventId);
-    await updateDoc(eventRef, {
-      ...updatedDetails,
-      updated_at: Timestamp.now(),
-    });
-    console.log("Event updated:", eventId);
-  } catch (error: any) {
+    const eventSnap = await getDoc(eventRef);
+
+    if (eventSnap.exists() && eventSnap.data().host_email === user?.email) {
+      await updateDoc(eventRef, {
+        ...updatedDetails,
+        updated_at: Timestamp.now(),
+      });
+    } else {
+      throw new Error("Only the host can edit this event");
+    }
+  } catch (error) {
     console.error("Error updating event:", error);
     throw error;
   }
@@ -92,6 +100,7 @@ export const fetchEvents = async (): Promise<EventDetails[]> => {
         is_RSVPable: data.is_RSVPable ?? false,
         invite_emails: data.invite_emails ?? [],
         host_id: data.host_id ?? '',
+        host_email: data.host_email ?? '',  // Fetch host_email
       };
       events.push(event);
     });
@@ -103,7 +112,7 @@ export const fetchEvents = async (): Promise<EventDetails[]> => {
   }
 };
 
-// Fetch Single Event by ID (for View Event UI)
+// Fetch Single Event by ID
 export const fetchEventById = async (eventId: string): Promise<EventDetails | null> => {
   try {
     const eventRef = doc(db, 'events', eventId);
@@ -124,6 +133,7 @@ export const fetchEventById = async (eventId: string): Promise<EventDetails | nu
         is_RSVPable: data?.is_RSVPable ?? false,
         invite_emails: data?.invite_emails ?? [],
         host_id: data?.host_id ?? '',
+        host_email: data?.host_email ?? '',  // Fetch host_email
       };
     } else {
       console.error("Event not found");
@@ -135,7 +145,7 @@ export const fetchEventById = async (eventId: string): Promise<EventDetails | nu
   }
 };
 
-// Delete Event by ID
+// Delete Event
 export const deleteEvent = async (eventId: string): Promise<void> => {
   try {
     await deleteDoc(doc(db, 'events', eventId));

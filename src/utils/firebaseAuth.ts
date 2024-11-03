@@ -1,6 +1,14 @@
 import { app } from './firebaseConfig';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, UserCredential, User } from "firebase/auth";
-import { getFirestore, doc, setDoc } from "firebase/firestore";  // Firestore functions
+import { 
+    getAuth, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    sendEmailVerification, 
+    signOut, 
+    UserCredential, 
+    User 
+} from "firebase/auth";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";  // Firestore functions
 
 const auth = getAuth(app);
 const firestore = getFirestore(app);  // Initialize Firestore
@@ -17,6 +25,22 @@ const appendSymbolForSchoolEmail = (email: string, displayName: string): string 
   return displayName;  // Return unchanged if not a school email
 };
 
+// Function to fetch user data by ID
+export const fetchUserById = async (userId: string): Promise<{ email: string; username: string; host_id: string; host_email: string } | null> => {
+    try {
+        const userDoc = await getDoc(doc(firestore, "users", userId));
+        if (userDoc.exists()) {
+            return userDoc.data() as { email: string; username: string; host_id: string; host_email: string };
+        } else {
+            console.warn("No such user found with ID:", userId);
+            return null;
+        }
+    } catch (error) {
+        console.error("Error fetching user data:", error);
+        return null;
+    }
+};
+
 // Sign up new user
 export const signUp = async (email: string, password: string, displayName: string = "User"): Promise<void> => {
   try {
@@ -26,11 +50,13 @@ export const signUp = async (email: string, password: string, displayName: strin
     // Check if the user has a school domain email
     const updatedDisplayName = appendSymbolForSchoolEmail(email, displayName);
 
-    // Store user data in Firestore
+    // Store user data in Firestore, including host_id and host_email
     await setDoc(doc(firestore, "users", user.uid), {
       username: updatedDisplayName,
       email: user.email,
       createdAt: new Date().toISOString(),
+      host_id: user.uid,           // Storing user ID as host_id
+      host_email: user.email       // Storing user email as host_email
     });
 
     // Send verification email
@@ -78,4 +104,10 @@ export const logOut = async (): Promise<void> => {
   } catch (error: any) {
     console.error("Error signing out:", error.message);
   }
+};
+
+// Fetch logged-in user's email
+export const getCurrentUserEmail = (): string | null => {
+  const user = auth.currentUser;
+  return user?.email || null;
 };

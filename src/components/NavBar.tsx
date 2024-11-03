@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppBar, Toolbar, Button, Typography, IconButton, Drawer, List, ListItem, ListItemText } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -7,11 +6,12 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 
 interface NavBarProps {
     onNavClick: (section: string) => void;
-    onLogout: () => void;  // Added onLogout prop
+    onLogout: () => void;  
     isAuthenticated: boolean;
+    currentUserEmail?: string; // Added currentUserEmail prop
 }
 
-const NavBar: React.FC<NavBarProps> = ({ onNavClick, onLogout, isAuthenticated }) => {
+const NavBar: React.FC<NavBarProps> = ({ onNavClick, onLogout, isAuthenticated, currentUserEmail }) => {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -28,16 +28,18 @@ const NavBar: React.FC<NavBarProps> = ({ onNavClick, onLogout, isAuthenticated }
     const menuItems = [
         { text: 'Events', section: 'events' },
         { text: 'Host Event', section: 'host' },
-        { text: 'Friends', section: 'friends' },
         { text: 'Notifications', section: 'notifications' },
     ];
+
+    // Extract the username from the currentUserEmail
+    const username = currentUserEmail ? currentUserEmail.split('@')[0] : 'Guest';
 
     return (
         <>
             <AppBar position="static">
                 <Toolbar>
                     <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                        Campus Banner
+                        Welcome, {username}!
                     </Typography>
 
                     {isMobile ? (
@@ -59,7 +61,7 @@ const NavBar: React.FC<NavBarProps> = ({ onNavClick, onLogout, isAuthenticated }
                                     ))}
 
                                     {isAuthenticated ? (
-                                        <ListItem onClick={onLogout} component="button">  {/* Call onLogout directly */}
+                                        <ListItem onClick={onLogout} component="button">
                                             <ListItemText primary="Logout" />
                                         </ListItem>
                                     ) : (
@@ -84,7 +86,7 @@ const NavBar: React.FC<NavBarProps> = ({ onNavClick, onLogout, isAuthenticated }
                             ))}
 
                             {isAuthenticated ? (
-                                <Button color="inherit" onClick={onLogout}>  {/* Call onLogout directly */}
+                                <Button color="inherit" onClick={onLogout}>
                                     Logout
                                 </Button>
                             ) : (
