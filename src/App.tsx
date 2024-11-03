@@ -4,7 +4,6 @@ import { Container, Grid, Box } from '@mui/material';
 import NavBar from './components/NavBar';
 import Map from './components/Map';
 import EventsList from './components/EventsList';
-import FriendsList from './components/FriendsList';
 import Login from './components/Login';
 import Notifications from './components/Notifications';
 import Signup from './components/Signup';
@@ -23,7 +22,7 @@ function App() {
   const [events, setEvents] = useState<EventDetails[]>([]);
   const navigate = useNavigate();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null); // State for current user email
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -44,6 +43,7 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsAuthenticated(!!user);
       setCurrentUserId(user ? user.uid : null); // Store the user ID when a user is logged in
+      setCurrentUserEmail(user ? user.email : null); // Store the user email when a user is logged in
     });
     return () => unsubscribe();
   }, []);
@@ -80,8 +80,6 @@ function App() {
     switch (activeSection) {
       case 'events':
         return <EventsList viewEvent={viewEvent} events={events} />;
-      case 'friends':
-        return <FriendsList />;
       case 'login':
         return <Login />;
       case 'notifications':
@@ -91,37 +89,41 @@ function App() {
       case 'host':
         return <HostEvent setIsDroppingPin={setIsDroppingPin} eventLocation={eventLocation} />;
       case 'viewEvent':
-        return selectedEventId ? <ViewEvent eventId={selectedEventId} currentUserId={currentUserId} /> : null;
+        return selectedEventId ? <ViewEvent eventId={selectedEventId} currentUserId={currentUserId} currentUserEmail={currentUserEmail} /> : null; // Pass both IDs
       default:
         return <EventsList viewEvent={viewEvent} events={events} />;
     }
   };
 
   return (
-      <Container maxWidth="xl">
-        <NavBar onNavClick={handleNavClick} onLogout={handleLogout} isAuthenticated={isAuthenticated} />
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={4}>
-            <Box sx={{ p: 2, bgcolor: 'grey.100', height: { xs: '50vh', md: '100vh' }, overflowY: 'auto' }}>
-              {renderActiveSection()}
-            </Box>
-          </Grid>
-
-          <Grid item xs={12} md={8}>
-            <Box sx={{ p: 2, height: { xs: '50vh', md: '100vh' } }}>
-              <Map
-                  events={events}
-                  selectedEventId={selectedEventId}
-                  isDroppingPin={isDroppingPin}
-                  onMapClick={handleMapClick}
-                  viewEvent={viewEvent}
-              />
-            </Box>
-          </Grid>
+    <Container maxWidth="xl">
+      <NavBar 
+        onNavClick={handleNavClick} 
+        onLogout={handleLogout} 
+        isAuthenticated={isAuthenticated} 
+        currentUserEmail={currentUserEmail} // Pass the current user email to NavBar
+      />
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={4}>
+          <Box sx={{ p: 2, bgcolor: 'grey.100', height: { xs: '50vh', md: '100vh' }, overflowY: 'auto' }}>
+            {renderActiveSection()}
+          </Box>
         </Grid>
-      </Container>
+
+        <Grid item xs={12} md={8}>
+          <Box sx={{ p: 2, height: { xs: '50vh', md: '100vh' } }}>
+            <Map
+              events={events}
+              selectedEventId={selectedEventId}
+              isDroppingPin={isDroppingPin}
+              onMapClick={handleMapClick}
+              viewEvent={viewEvent}
+            />
+          </Box>
+        </Grid>
+      </Grid>
+    </Container>
   );
 }
 
 export default App;
-
