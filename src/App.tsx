@@ -49,6 +49,24 @@ function App() {
     return () => unsubscribe();
   }, []);
 
+  // Check local storage for the saved active section and selected event ID on initial load
+  useEffect(() => {
+    const savedSection = localStorage.getItem('activeSection');
+    const savedEventId = localStorage.getItem('selectedEventId');
+
+    if (savedSection) {
+      setActiveSection(savedSection);
+    }
+
+    if (savedEventId) {
+      setSelectedEventId(savedEventId);
+      if (savedSection === 'viewEvent') {
+        // Navigate to the event if we're in viewEvent
+        navigate(`/events/${savedEventId}`);
+      }
+    }
+  }, []); // Run this effect only on component mount
+
   // Check the URL for an event ID
   useEffect(() => {
     const pathParts = location.pathname.split('/');
@@ -56,6 +74,8 @@ function App() {
     if (pathParts[1] === 'events' && eventIdFromUrl) {
       setActiveSection('viewEvent');
       setSelectedEventId(eventIdFromUrl); // Set the selected event ID from URL
+      localStorage.setItem('activeSection', 'viewEvent'); // Update local storage
+      localStorage.setItem('selectedEventId', eventIdFromUrl); // Update local storage
     }
   }, [location.pathname]); // Run this effect when the pathname changes
 
@@ -64,12 +84,39 @@ function App() {
     if (section !== 'host') {
       setIsDroppingPin(false);
     }
+
+    // Update the URL based on the section clicked and save to local storage
+    switch (section) {
+      case 'events':
+        navigate('/events');
+        break;
+      case 'login':
+        navigate('/login');
+        break;
+      case 'notifications':
+        navigate('/notifications');
+        break;
+      case 'signup':
+        navigate('/signup');
+        break;
+      case 'host':
+        navigate('/host');
+        break;
+      default:
+        navigate('/events');
+    }
+    // Save the active section to local storage
+    localStorage.setItem('activeSection', section);
   };
 
   const viewEvent = (eventId: string) => {
     setActiveSection('viewEvent');
     setSelectedEventId(eventId);
     navigate(`/events/${eventId}`); // Navigate to the specific event URL
+
+    // Update local storage with selected event ID and active section
+    localStorage.setItem('activeSection', 'viewEvent');
+    localStorage.setItem('selectedEventId', eventId);
   };
 
   const handleMapClick = (latLng: { lat: number; lng: number }) => {
@@ -81,6 +128,9 @@ function App() {
     alert("Logout successful!");
     setActiveSection("events");
     navigate('/events');  // Redirect to event list after logout
+    // Clear local storage upon logout
+    localStorage.removeItem('activeSection');
+    localStorage.removeItem('selectedEventId');
   };
 
   const renderActiveSection = () => {
