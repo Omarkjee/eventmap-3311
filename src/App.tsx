@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Container, Grid, Box } from '@mui/material';
 import NavBar from './components/NavBar';
 import Map from './components/Map';
@@ -21,6 +21,7 @@ function App() {
   const [eventLocation, setEventLocation] = useState({ lat: 0, lng: 0 });
   const [events, setEvents] = useState<EventDetails[]>([]);
   const navigate = useNavigate();
+  const location = useLocation(); // Access the current location
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null); // State for current user email
 
@@ -48,6 +49,16 @@ function App() {
     return () => unsubscribe();
   }, []);
 
+  // Check the URL for an event ID
+  useEffect(() => {
+    const pathParts = location.pathname.split('/');
+    const eventIdFromUrl = pathParts[2]; // Assuming the URL structure is /events/:eventId
+    if (pathParts[1] === 'events' && eventIdFromUrl) {
+      setActiveSection('viewEvent');
+      setSelectedEventId(eventIdFromUrl); // Set the selected event ID from URL
+    }
+  }, [location.pathname]); // Run this effect when the pathname changes
+
   const handleNavClick = (section: string) => {
     setActiveSection(section);
     if (section !== 'host') {
@@ -58,6 +69,7 @@ function App() {
   const viewEvent = (eventId: string) => {
     setActiveSection('viewEvent');
     setSelectedEventId(eventId);
+    navigate(`/events/${eventId}`); // Navigate to the specific event URL
   };
 
   const handleMapClick = (latLng: { lat: number; lng: number }) => {
@@ -69,11 +81,6 @@ function App() {
     alert("Logout successful!");
     setActiveSection("events");
     navigate('/events');  // Redirect to event list after logout
-
-    // Fallback to ensure redirection in case navigate does not work as expected
-    setTimeout(() => {
-      window.location.href = '/events';
-    }, 100);
   };
 
   const renderActiveSection = () => {
