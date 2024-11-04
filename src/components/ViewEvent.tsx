@@ -54,9 +54,12 @@ const ViewEvent = ({ eventId }: ViewEventProps) => {
     };
 
     const handleCopyLink = () => {
-        const eventUrl = `${window.location.origin}/events/${eventId}`;
+        const eventUrl = `${window.location.origin}/events/${eventId}`; // Generate event URL
         navigator.clipboard.writeText(eventUrl)
-            .then(() => setSnackbarOpen(true))
+            .then(() => {
+                setSnackbarOpen(true);
+                console.log("Event URL copied:", eventUrl); // Log the URL for verification
+            })
             .catch((error) => console.error("Failed to copy link:", error));
     };
 
@@ -69,7 +72,7 @@ const ViewEvent = ({ eventId }: ViewEventProps) => {
                 `Location: ${event.location_info}\n` +
                 `Start Time: ${new Date(event.start_time).toLocaleString()}\n` +
                 `End Time: ${new Date(event.end_time).toLocaleString()}\n\n` +
-                `You can view more details here: ${window.location.origin}/events/${eventId}`;
+                `You can view more details here: ${window.location.origin}/events/${eventId}`; // Ensure correct URL
             window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         }
     };
@@ -98,7 +101,6 @@ const ViewEvent = ({ eventId }: ViewEventProps) => {
                 padding: '16px',
                 maxWidth: '100%',
             },
-            // Removed overflow and height restrictions
         }}>
             <Typography variant="h4" gutterBottom>
                 {event.title}
