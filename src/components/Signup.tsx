@@ -8,10 +8,17 @@ const Signup = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const passwordRequirements = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);  // Clear previous errors
-    setSuccessMessage(null);  // Clear previous success messages
+    setError(null);
+    setSuccessMessage(null);
+
+    if (!passwordRequirements.test(password)) {
+      setError("Password must contain at least 8 characters, one capital letter, one number, and one special character.");
+      return;
+    }
 
     try {
       await signUp(email, password);
@@ -42,6 +49,7 @@ const Signup = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              helperText="Password must be at least 8 characters long, contain one capital letter, one number, and one special character."
           />
           <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>Sign Up</Button>
         </form>
