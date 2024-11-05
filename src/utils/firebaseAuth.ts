@@ -78,7 +78,7 @@ export const signIn = async (email: string, password: string): Promise<void> => 
 
     if (user.emailVerified) {
       console.log("User signed in and email verified:", user);
-      alert("Login successful!");
+      //alert("Login successful!");
     } else {
       alert("Your email is not verified. Please check your inbox to verify your email.");
 

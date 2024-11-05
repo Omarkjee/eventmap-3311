@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signIn } from '../utils/firebaseAuth';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 import { Box, Button, TextField, Typography, Alert, Link, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 
-const Login = () => {
+interface LoginProps {
+  onLoginSuccess: () => void; 
+  clearFormOnUnmount: boolean; 
+}
+
+const Login: React.FC<LoginProps> = ({ onLoginSuccess, clearFormOnUnmount }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -18,12 +23,8 @@ const Login = () => {
 
     try {
       await signIn(email, password);
-      navigate('/events');  // Redirect to event list after successful login
-
-      // Fallback in case navigate does not work as expected
-      setTimeout(() => {
-        window.location.href = '/events';
-      }, 100);
+      onLoginSuccess();
+      navigate('/events');
     } catch (error) {
       setError((error as Error).message);
     }
@@ -43,11 +44,32 @@ const Login = () => {
     }
   };
 
+  // Clear form fields on unmount or when clearFormOnUnmount prop changes
+  useEffect(() => {
+    return () => {
+      if (clearFormOnUnmount) {
+        setEmail('');
+        setPassword('');
+      }
+    };
+  }, [clearFormOnUnmount]);
+
+  // Focus on email input field when dialog opens
+  useEffect(() => {
+    if (forgotPasswordDialog) {
+      const input = document.getElementById('email-input');
+      if (input) {
+        input.focus(); // Focus the email input field when the dialog opens
+      }
+    }
+  }, [forgotPasswordDialog]);
+
   return (
     <Box display="flex" flexDirection="column" alignItems="center" p={3} boxShadow={3} borderRadius={2} maxWidth={400} margin="auto">
       <Typography variant="h4" gutterBottom>Login</Typography>
       <form onSubmit={handleSubmit} style={{ width: '100%' }}>
         <TextField
+          id="email-input" // Added id for focusing
           label="Email"
           type="email"
           fullWidth
@@ -65,16 +87,19 @@ const Login = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <Link
-          component="button"
-          variant="body2"
-          onClick={() => setForgotPasswordDialog(true)}
-          sx={{ mt: 1, textAlign: 'right', display: 'block' }}
-        >
-          Forgot Password?
-        </Link>
         <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>Login</Button>
       </form>
+      <Link
+        component="button"
+        variant="body2"
+        onClick={(e) => {
+          e.preventDefault();
+          setForgotPasswordDialog(true);
+        }}
+        sx={{ mt: 1, textAlign: 'right', display: 'block' }}
+      >
+        Forgot Password?
+      </Link>
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
       {successMessage && <Alert severity="success" sx={{ mt: 2 }}>{successMessage}</Alert>}
 
@@ -85,6 +110,7 @@ const Login = () => {
             Enter your email address to receive a password reset link.
           </DialogContentText>
           <TextField
+            id="email-input" // Added id for focusing
             autoFocus
             margin="dense"
             label="Email Address"

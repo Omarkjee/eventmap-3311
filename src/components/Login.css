@@ -1,31 +1,48 @@
-/*.login {*/
-/*  padding: 20px;*/
-/*  background-color: #f0f0f0;*/
-/*}*/
-
-/*.login form {*/
-/*  display: flex;*/
-/*  flex-direction: column;*/
-/*}*/
-
-/*.login label {*/
-/*  margin-top: 10px;*/
-/*}*/
-
-/*.login input {*/
-/*  padding: 10px;*/
-/*  margin-top: 5px;*/
-/*  margin-bottom: 15px;*/
-/*}*/
-
-/*.login button {*/
-/*  padding: 10px 15px;*/
-/*  background-color: #007BFF;*/
-/*  color: white;*/
-/*  border: none;*/
-/*  cursor: pointer;*/
-/*}*/
-
-/*.login button:hover {*/
-/*  background-color: #0056b3;*/
-/*}*/
+.login {
+    padding: 20px;
+    background-color: #f0f0f0;
+  }
+  
+  .login form {
+    display: flex;
+    flex-direction: column;
+    width: 100%; /* Ensure the form takes full width */
+  }
+  
+  .login label {
+    margin-top: 10px;
+  }
+  
+  .login input {
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc; /* Light border */
+    border-radius: 4px; /* Rounded corners */
+  }
+  
+  .login button {
+    padding: 10px 15px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth transition */
+  }
+  
+  .login button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+  }
+  
+  .login button:focus {
+    outline: none; /* Removes default outline */
+    box-shadow: 0 0 3px rgba(0, 123, 255, 0.5); /* Custom focus effect */
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 600px) {
+    .login {
+      padding: 15px; /* Less padding on smaller screens */
+    }
+  }
+  
