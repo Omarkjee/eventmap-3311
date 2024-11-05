@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Container, Grid, Box } from '@mui/material';
+import { Container, Grid, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button, Snackbar } from '@mui/material';
 import NavBar from './components/NavBar';
 import Map from './components/Map';
 import EventsList from './components/EventsList';
@@ -20,10 +20,16 @@ function App() {
   const [isDroppingPin, setIsDroppingPin] = useState(false);
   const [eventLocation, setEventLocation] = useState({ lat: 0, lng: 0 });
   const [events, setEvents] = useState<EventDetails[]>([]);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState<boolean>(false);
+  const [countdown, setCountdown] = useState<number>(5);
   const navigate = useNavigate();
-  const location = useLocation(); // Access the current location
+  const location = useLocation();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null); // State for current user email
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+  const [showSnackbarOnLogin, setShowSnackbarOnLogin] = useState<boolean>(false);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -42,14 +48,31 @@ function App() {
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(!!user);
-      setCurrentUserId(user ? user.uid : null); // Store the user ID when a user is logged in
-      setCurrentUserEmail(user ? user.email : null); // Store the user email when a user is logged in
+      if (user) {
+        setIsAuthenticated(true);
+        setCurrentUserId(user.uid);
+        setCurrentUserEmail(user.email);
+
+        if (showSnackbarOnLogin) {
+          // Show Snackbar on successful sign-in
+          setSnackbarMessage('Successfully signed in!');
+          setSnackbarSeverity('success');
+          setSnackbarOpen(true);
+          setShowSnackbarOnLogin(false); // Reset the flag
+        }
+
+        // Set active section to events upon successful login
+        setActiveSection('events');
+        navigate('/events');
+      } else {
+        setIsAuthenticated(false);
+        setCurrentUserId(null);
+        setCurrentUserEmail(null);
+      }
     });
     return () => unsubscribe();
-  }, []);
+  }, [navigate, showSnackbarOnLogin]);
 
-  // Check local storage for the saved active section and selected event ID on initial load
   useEffect(() => {
     const savedSection = localStorage.getItem('activeSection');
     const savedEventId = localStorage.getItem('selectedEventId');
@@ -61,23 +84,25 @@ function App() {
     if (savedEventId) {
       setSelectedEventId(savedEventId);
       if (savedSection === 'viewEvent') {
-        // Navigate to the event if we're in viewEvent
         navigate(`/events/${savedEventId}`);
       }
     }
-  }, []); // Run this effect only on component mount
+  }, [navigate]);
 
-  // Check the URL for an event ID
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
   useEffect(() => {
     const pathParts = location.pathname.split('/');
-    const eventIdFromUrl = pathParts[2]; // Assuming the URL structure is /events/:eventId
+    const eventIdFromUrl = pathParts[2];
     if (pathParts[1] === 'events' && eventIdFromUrl) {
       setActiveSection('viewEvent');
-      setSelectedEventId(eventIdFromUrl); // Set the selected event ID from URL
-      localStorage.setItem('activeSection', 'viewEvent'); // Update local storage
-      localStorage.setItem('selectedEventId', eventIdFromUrl); // Update local storage
+      setSelectedEventId(eventIdFromUrl);
+      localStorage.setItem('activeSection', 'viewEvent');
+      localStorage.setItem('selectedEventId', eventIdFromUrl);
     }
-  }, [location.pathname]); // Run this effect when the pathname changes
+  }, [location.pathname]);
 
   const handleNavClick = (section: string) => {
     setActiveSection(section);
@@ -85,7 +110,6 @@ function App() {
       setIsDroppingPin(false);
     }
 
-    // Update the URL based on the section clicked and save to local storage
     switch (section) {
       case 'events':
         navigate('/events');
@@ -105,16 +129,13 @@ function App() {
       default:
         navigate('/events');
     }
-    // Save the active section to local storage
     localStorage.setItem('activeSection', section);
   };
 
   const viewEvent = (eventId: string) => {
     setActiveSection('viewEvent');
     setSelectedEventId(eventId);
-    navigate(`/events/${eventId}`); // Navigate to the specific event URL
-
-    // Update local storage with selected event ID and active section
+    navigate(`/events/${eventId}`);
     localStorage.setItem('activeSection', 'viewEvent');
     localStorage.setItem('selectedEventId', eventId);
   };
@@ -124,13 +145,47 @@ function App() {
   };
 
   const handleLogout = async () => {
-    await logOut();
-    alert("Logout successful!");
-    setActiveSection("events");
-    navigate('/events');  // Redirect to event list after logout
-    // Clear local storage upon logout
-    localStorage.removeItem('activeSection');
-    localStorage.removeItem('selectedEventId');
+    try {
+      await logOut();
+      setLogoutDialogOpen(true);
+      setCountdown(5); // Start countdown timer to 5 seconds
+      localStorage.removeItem('activeSection');
+      localStorage.removeItem('selectedEventId');
+    } catch (error) {
+      alert("Logout failed. Please try again.");
+    }
+  };
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (logoutDialogOpen) {
+      const countdownInterval = setInterval(() => {
+        setCountdown(prevCountdown => {
+          if (prevCountdown <= 1) {
+            clearInterval(countdownInterval);
+            setLogoutDialogOpen(false); // Close dialog
+            setActiveSection('login'); // Only set active section to login here
+            navigate('/login'); // Redirect to login page
+            setSnackbarMessage('Successfully logged out!'); // Set logout success message
+            setSnackbarSeverity('success'); // Set severity
+            setSnackbarOpen(true); // Open the snackbar
+            return 0;
+          }
+          return prevCountdown - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(countdownInterval); // Cleanup interval on unmount or dialog close
+    }
+  }, [logoutDialogOpen, navigate]);
+
+  const closeDialog = () => {
+    setLogoutDialogOpen(false); // Close dialog immediately
+    setActiveSection('login'); // Set active section to login
+    navigate('/login'); // Navigate to login page
+    setSnackbarMessage('Successfully logged out!'); // Set logout success message
+    setSnackbarSeverity('success'); // Set severity
+    setSnackbarOpen(true); // Open the snackbar
   };
 
   const renderActiveSection = () => {
@@ -138,7 +193,10 @@ function App() {
       case 'events':
         return <EventsList viewEvent={viewEvent} events={events} />;
       case 'login':
-        return <Login />;
+        return <Login 
+          onLoginSuccess={() => setShowSnackbarOnLogin(true)} 
+          clearFormOnUnmount={activeSection !== 'login'} // Pass a prop to clear form on unmount
+        />; 
       case 'notifications':
         return <Notifications />;
       case 'signup':
@@ -146,7 +204,7 @@ function App() {
       case 'host':
         return <HostEvent setIsDroppingPin={setIsDroppingPin} eventLocation={eventLocation} />;
       case 'viewEvent':
-        return selectedEventId ? <ViewEvent eventId={selectedEventId} currentUserId={currentUserId} currentUserEmail={currentUserEmail} /> : null; // Pass both IDs
+        return selectedEventId ? <ViewEvent eventId={selectedEventId} currentUserId={currentUserId} currentUserEmail={currentUserEmail} /> : null;
       default:
         return <EventsList viewEvent={viewEvent} events={events} />;
     }
@@ -158,7 +216,7 @@ function App() {
         onNavClick={handleNavClick} 
         onLogout={handleLogout} 
         isAuthenticated={isAuthenticated} 
-        currentUserEmail={currentUserEmail} // Pass the current user email to NavBar
+        currentUserEmail={currentUserEmail}
       />
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
@@ -179,6 +237,28 @@ function App() {
           </Box>
         </Grid>
       </Grid>
+
+      <Dialog open={logoutDialogOpen} onClose={closeDialog}>
+        <DialogTitle>Logout Successful</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You have successfully logged out. Redirecting to the login page in {countdown} seconds...
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDialog} color="primary">
+            Go to Login Now
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={5000}
+        onClose={handleSnackbarClose}
+        message={snackbarMessage}
+        severity={snackbarSeverity}
+      />
     </Container>
   );
 }
