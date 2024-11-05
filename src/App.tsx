@@ -30,6 +30,7 @@ function App() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const [showSnackbarOnLogin, setShowSnackbarOnLogin] = useState<boolean>(false);
+  const [hasRedirectedAfterLogin, setHasRedirectedAfterLogin] = useState<boolean>(false);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -61,17 +62,21 @@ function App() {
           setShowSnackbarOnLogin(false); // Reset the flag
         }
 
-        // Set active section to events upon successful login
-        setActiveSection('events');
-        navigate('/events');
+        // Redirect to events only if not redirected before
+        if (!hasRedirectedAfterLogin) {
+          setActiveSection('events');
+          navigate('/events');
+          setHasRedirectedAfterLogin(true); // Set the flag after redirection
+        }
       } else {
         setIsAuthenticated(false);
         setCurrentUserId(null);
         setCurrentUserEmail(null);
+        setHasRedirectedAfterLogin(false); // Reset the flag on logout
       }
     });
     return () => unsubscribe();
-  }, [navigate, showSnackbarOnLogin]);
+  }, [navigate, showSnackbarOnLogin, hasRedirectedAfterLogin]);
 
   useEffect(() => {
     const savedSection = localStorage.getItem('activeSection');

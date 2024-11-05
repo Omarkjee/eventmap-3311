@@ -25,10 +25,10 @@ const NavBar: React.FC<NavBarProps> = ({ onNavClick, onLogout, isAuthenticated, 
         setDrawerOpen(false);
     };
 
+    // Menu items - only show "Host Event" and "Notifications" if the user is authenticated
     const menuItems = [
         { text: 'Events', section: 'events' },
-        { text: 'Host Event', section: 'host' },
-        { text: 'Notifications', section: 'notifications' },
+        ...(isAuthenticated ? [{ text: 'Host Event', section: 'host' }, { text: 'Notifications', section: 'notifications' }] : []), // Conditionally include Host Event and Notifications
     ];
 
     // Extract the username from the currentUserEmail
