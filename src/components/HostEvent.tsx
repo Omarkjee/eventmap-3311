@@ -1,11 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Switch, FormControlLabel, Typography, Box, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import { createEvent, editEvent, fetchEventById } from '../utils/firebaseEvents';
+import { createEvent, editEvent } from '../utils/firebaseEvents';
 import { getAuth } from 'firebase/auth';
-import { Filter } from 'bad-words'; // Import the bad-words library
+import { Filter } from 'bad-words';
 
-const HostEvent = ({ setIsDroppingPin, eventLocation, eventId }: { setIsDroppingPin: React.Dispatch<React.SetStateAction<boolean>>, eventLocation: { lat: number; lng: number }, eventId?: string }) => {
-  const [eventDetails, setEventDetails] = useState({
+interface EventDetails {
+  title: string;
+  description: string;
+  start_time: Date | string;
+  end_time: Date | string;
+  location_info: string;
+  latitude: number;
+  longitude: number;
+  is_private: boolean;
+  is_RSVPable: boolean;
+  invite_emails: string[]; // Updated to string[]
+  host_id: string;
+}
+
+const HostEvent = ({
+                     setIsDroppingPin,
+                     eventLocation,
+                     eventId,
+                     eventDetails
+                   }: {
+  setIsDroppingPin: React.Dispatch<React.SetStateAction<boolean>>,
+  eventLocation: { lat: number; lng: number },
+  eventId?: string | null,
+  eventDetails?: EventDetails
+}) => {
+  const [eventDetailsState, setEventDetailsState] = useState<EventDetails>({
     title: '',
     description: '',
     start_time: '',
@@ -15,105 +39,67 @@ const HostEvent = ({ setIsDroppingPin, eventLocation, eventId }: { setIsDropping
     longitude: 0,
     is_private: false,
     is_RSVPable: false,
-    invite_emails: '', // Changed to a string for form compatibility
-    host_id: '', // Add the logged-in user's ID here later
+    invite_emails: [], // Set as an empty array initially
+    host_id: ''
   });
 
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
-  const filter = new Filter(); // Initialize the filter
+  const filter = new Filter();
 
   useEffect(() => {
-    if (eventId) {
-      const loadEvent = async () => {
-        const eventData = await fetchEventById(eventId);
-        if (eventData) {
-          setEventDetails({
-            ...eventData,
-            start_time: eventData.start_time.toString().slice(0, 16), // Format for input field
-            end_time: eventData.end_time.toString().slice(0, 16), // Format for input field
-            invite_emails: eventData.invite_emails.join(', ') // Convert array to comma-separated string for input field
-          });
-        }
-      };
-      loadEvent();
+    // Populate the form with event details if editing
+    if (eventDetails) {
+      setEventDetailsState({
+        ...eventDetails,
+        start_time: typeof eventDetails.start_time === 'string'
+            ? eventDetails.start_time.slice(0, 16)
+            : eventDetails.start_time.toISOString().slice(0, 16), // Format Date as a string in "YYYY-MM-DDTHH:mm"
+        end_time: typeof eventDetails.end_time === 'string'
+            ? eventDetails.end_time.slice(0, 16)
+            : eventDetails.end_time.toISOString().slice(0, 16),
+        invite_emails: eventDetails.invite_emails // Directly use as an array
+      });
     }
-  }, [eventId]);
+  }, [eventDetails]);
 
-  useEffect(() => {
-    if (warningMessage) {
-      const timer = setTimeout(() => {
-        setWarningMessage(null);
-      }, 5000);
-
-      return () => clearTimeout(timer); // Cleanup the timer on unmount or when warningMessage changes
-    }
-  }, [warningMessage]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const value = e.target.value;
 
-    // Check if the input contains any bad words
+    // Check for inappropriate language
     if (filter.isProfane(value)) {
-      setWarningMessage("Your input contains inappropriate language. Please re-enter. Select \"ok\" or wait to clear this message.");
-      setEventDetails({
-        ...eventDetails,
-        [e.target.name]: '' // Clear the input field
+      setWarningMessage("Your input contains inappropriate language. Please re-enter.");
+      setEventDetailsState({
+        ...eventDetailsState,
+        [e.target.name]: ''
       });
-      return; // Reject the input
+      return;
     }
 
-    setEventDetails({
-      ...eventDetails,
+    setEventDetailsState({
+      ...eventDetailsState,
       [e.target.name]: value
-    });
-  };
-
-  const handleTogglePrivate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEventDetails({
-      ...eventDetails,
-      is_private: e.target.checked
-    });
-  };
-
-  const handleToggleRSVPable = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEventDetails({
-      ...eventDetails,
-      is_RSVPable: e.target.checked
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const auth = getAuth();
-    const userId = auth.currentUser ? auth.currentUser.uid : null; // Get the current user ID
+    const userId = auth.currentUser ? auth.currentUser.uid : null;
 
     if (!userId) {
       alert("You must be logged in to create or edit an event.");
-      return; // Prevent submission if not authenticated
-    }
-
-    const oneWeekFromNow = new Date();
-    oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
-
-    if (new Date(eventDetails.start_time) > oneWeekFromNow) {
-      alert("Events can only be created up to 1 week in advance.");
       return;
     }
 
+    const newEvent = {
+      ...eventDetailsState,
+      latitude: eventLocation.lat,
+      longitude: eventLocation.lng,
+      host_id: userId
+    };
+
     try {
-      if (!eventDetails.title || !eventDetails.location_info || !eventLocation.lat || !eventLocation.lng) {
-        alert("Please fill out all required fields and drop a pin on the map.");
-        return;
-      }
-
-      const newEvent = {
-        ...eventDetails,
-        latitude: eventLocation.lat,
-        longitude: eventLocation.lng,
-        host_id: userId, // Set host_id to the authenticated user's ID
-        invite_emails: eventDetails.invite_emails.split(',').map(email => email.trim()) // Convert string back to array
-      };
-
       if (eventId) {
         await editEvent(eventId, newEvent);
         alert("Event updated successfully!");
@@ -121,11 +107,9 @@ const HostEvent = ({ setIsDroppingPin, eventLocation, eventId }: { setIsDropping
         await createEvent(newEvent);
         alert("Event created successfully!");
       }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error(error.message);
-        alert("An error occurred while creating or editing the event. Please try again.");
-      }
+    } catch (error) {
+      console.error("Error creating/editing event:", error);
+      alert("An error occurred. Please try again.");
     }
   };
 
@@ -134,122 +118,116 @@ const HostEvent = ({ setIsDroppingPin, eventLocation, eventId }: { setIsDropping
   };
 
   return (
-    <Box sx={{ p: 2, maxWidth: '600px', margin: 'auto' }}>
-      <Typography variant="h4" gutterBottom>
-        {eventId ? "Edit Event" : "Host an Event"}
-      </Typography>
-
-      <form onSubmit={handleSubmit}>
-        <TextField
-          fullWidth
-          label="Event Name"
-          name="title"
-          value={eventDetails.title}
-          onChange={handleChange}
-          required
-          margin="normal"
-        />
-
-        <TextField
-          fullWidth
-          label="Location Info"
-          name="location_info"
-          value={eventDetails.location_info}
-          onChange={handleChange}
-          required
-          margin="normal"
-        />
-
-        <TextField
-          fullWidth
-          label="Start Time"
-          type="datetime-local"
-          name="start_time"
-          value={eventDetails.start_time}
-          onChange={handleChange}
-          InputLabelProps={{ shrink: true }}
-          required
-          margin="normal"
-        />
-
-        <TextField
-          fullWidth
-          label="End Time"
-          type="datetime-local"
-          name="end_time"
-          value={eventDetails.end_time}
-          onChange={handleChange}
-          InputLabelProps={{ shrink: true }}
-          required
-          margin="normal"
-        />
-
-        <TextField
-          fullWidth
-          multiline
-          rows={4}
-          label="Description"
-          name="description"
-          value={eventDetails.description}
-          onChange={handleChange}
-          required
-          margin="normal"
-        />
-
-        <FormControlLabel
-          control={<Switch checked={eventDetails.is_private} onChange={handleTogglePrivate} />}
-          label="Make event private"
-        />
-
-        {eventDetails.is_private && (
+      <Box sx={{ p: 2, maxWidth: '600px', margin: 'auto' }}>
+        <Typography variant="h4" gutterBottom>
+          {eventId ? "Edit Event" : "Host an Event"}
+        </Typography>
+        <form onSubmit={handleSubmit}>
           <TextField
-            fullWidth
-            label="Invite people via email (comma separated)"
-            name="invite_emails"
-            value={eventDetails.invite_emails}
-            onChange={handleChange}
-            margin="normal"
+              fullWidth
+              label="Event Name"
+              name="title"
+              value={eventDetailsState.title}
+              onChange={handleChange}
+              required
+              margin="normal"
           />
-        )}
-
-        <FormControlLabel
-          control={<Switch checked={eventDetails.is_RSVPable} onChange={handleToggleRSVPable} />}
-          label="Allow RSVPs"
-        />
-
-        <Button
-          fullWidth
-          variant="contained"
-          color="primary"
-          sx={{ mt: 2 }}
-          onClick={() => setIsDroppingPin(true)}
-        >
-          Drop Pin on Map
-        </Button>
-
-        <Button
-          fullWidth
-          variant="contained"
-          color="secondary"
-          type="submit"
-          sx={{ mt: 2 }}
-        >
-          {eventId ? "Update Event" : "Create Event"}
-        </Button>
-      </form>
-
-      <Dialog open={Boolean(warningMessage)} onClose={handleCloseDialog}>
-        <DialogTitle>Warning</DialogTitle>
-        <DialogContent>
-          <Typography>{warningMessage}</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
-            OK
+          <TextField
+              fullWidth
+              label="Location Info"
+              name="location_info"
+              value={eventDetailsState.location_info}
+              onChange={handleChange}
+              required
+              margin="normal"
+          />
+          <TextField
+              fullWidth
+              label="Start Time"
+              type="datetime-local"
+              name="start_time"
+              value={eventDetailsState.start_time}
+              onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+              required
+              margin="normal"
+          />
+          <TextField
+              fullWidth
+              label="End Time"
+              type="datetime-local"
+              name="end_time"
+              value={eventDetailsState.end_time}
+              onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+              required
+              margin="normal"
+          />
+          <TextField
+              fullWidth
+              multiline
+              rows={4}
+              label="Description"
+              name="description"
+              value={eventDetailsState.description}
+              onChange={handleChange}
+              required
+              margin="normal"
+          />
+          <FormControlLabel
+              control={<Switch checked={eventDetailsState.is_private} onChange={(e) => setEventDetailsState({ ...eventDetailsState, is_private: e.target.checked })} />}
+              label="Make event private"
+          />
+          {eventDetailsState.is_private && (
+              <TextField
+                  fullWidth
+                  label="Invite people via email (comma separated)"
+                  name="invite_emails"
+                  value={eventDetailsState.invite_emails.join(', ')} // Convert to string for display
+                  onChange={(e) =>
+                      setEventDetailsState({
+                        ...eventDetailsState,
+                        invite_emails: e.target.value.split(',').map(email => email.trim()) // Convert back to array on change
+                      })
+                  }
+                  margin="normal"
+              />
+          )}
+          <FormControlLabel
+              control={<Switch checked={eventDetailsState.is_RSVPable} onChange={(e) => setEventDetailsState({ ...eventDetailsState, is_RSVPable: e.target.checked })} />}
+              label="Allow RSVPs"
+          />
+          <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              sx={{ mt: 2 }}
+              onClick={() => setIsDroppingPin(true)}
+          >
+            Drop Pin on Map
           </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+          <Button
+              fullWidth
+              variant="contained"
+              color="secondary"
+              type="submit"
+              sx={{ mt: 2 }}
+          >
+            {eventId ? "Update Event" : "Create Event"}
+          </Button>
+        </form>
+        <Dialog open={Boolean(warningMessage)} onClose={handleCloseDialog}>
+          <DialogTitle>Warning</DialogTitle>
+          <DialogContent>
+            <Typography>{warningMessage}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog} color="primary">
+              OK
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
   );
 };
 

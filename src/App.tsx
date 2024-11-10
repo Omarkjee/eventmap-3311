@@ -11,7 +11,7 @@ import HostEvent from './components/HostEvent';
 import ViewEvent from './components/ViewEvent';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { logOut } from './utils/firebaseAuth';
-import { EventDetails, fetchEvents } from './utils/firebaseEvents';
+import { EventDetails, fetchEvents, fetchEventById } from './utils/firebaseEvents';
 
 function App() {
   const [activeSection, setActiveSection] = useState<string>('events');
@@ -31,6 +31,8 @@ function App() {
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const [showSnackbarOnLogin, setShowSnackbarOnLogin] = useState<boolean>(false);
   const [hasRedirectedAfterLogin, setHasRedirectedAfterLogin] = useState<boolean>(false);
+  const [eventToEdit, setEventToEdit] = useState<EventDetails | undefined>(undefined);
+
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -108,6 +110,31 @@ function App() {
       localStorage.setItem('selectedEventId', eventIdFromUrl);
     }
   }, [location.pathname]);
+
+  const navigateToEditEvent = (eventId: string) => {
+    setSelectedEventId(eventId); // Set the event ID to be edited
+    setActiveSection('host'); // Switch to the host section
+  };
+
+  useEffect(() => {
+    if (selectedEventId && activeSection === 'host') {
+      // Fetch the event details to edit when we are in 'host' mode and have an event selected
+      const fetchEventDetails = async () => {
+        const event = await fetchEventById(selectedEventId);
+        if (event) {
+          setEventToEdit({
+            ...event,
+            start_time: event.start_time instanceof Date ? event.start_time.toISOString() : event.start_time,
+            end_time: event.end_time instanceof Date ? event.end_time.toISOString() : event.end_time,
+          });
+        }
+      };
+      fetchEventDetails();
+    } else {
+      // Clear eventToEdit when not in edit mode
+      setEventToEdit(undefined);
+    }
+  }, [selectedEventId, activeSection]);
 
   const handleNavClick = (section: string) => {
     setActiveSection(section);
@@ -207,9 +234,16 @@ function App() {
       case 'signup':
         return <Signup />;
       case 'host':
-        return <HostEvent setIsDroppingPin={setIsDroppingPin} eventLocation={eventLocation} />;
+        return (
+            <HostEvent
+                setIsDroppingPin={setIsDroppingPin}
+                eventLocation={eventLocation}
+                eventId={selectedEventId}
+                eventDetails={eventToEdit}
+            />
+        );
       case 'viewEvent':
-        return selectedEventId ? <ViewEvent eventId={selectedEventId} currentUserId={currentUserId} currentUserEmail={currentUserEmail} /> : null;
+        return selectedEventId ? <ViewEvent eventId={selectedEventId} navigateToEditEvent={navigateToEditEvent} currentUserId={currentUserId} currentUserEmail={currentUserEmail} /> : null;
       default:
         return <EventsList viewEvent={viewEvent} events={events} />;
     }

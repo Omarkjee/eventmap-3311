@@ -24,15 +24,16 @@ export type EventDetails = {
 // Create Event
 export const createEvent = async (eventDetails: {
   is_private: boolean;
-  start_time: string;
+  start_time: Date | string;
   is_RSVPable: boolean;
   invite_emails: string[];
   latitude: number;
-  end_time: string;
+  end_time: Date | string;
   description: string;
   title: string;
   location_info: string;
-  longitude: number;
+  host_id: string;
+  longitude: number
 }): Promise<string> => {
   try {
     const user = auth.currentUser;
@@ -78,6 +79,16 @@ export const editEvent = async (eventId: string, updatedDetails: Partial<EventDe
     throw error;
   }
 };
+// Helper function to ensure we get a Date object
+const convertToDate = (field: any) => {
+  if (field instanceof Date) {
+    return field;
+  }
+  if (field?.toDate) {
+    return field.toDate();
+  }
+  return new Date(field);
+};
 
 // Fetch All Events
 export const fetchEvents = async (): Promise<EventDetails[]> => {
@@ -91,8 +102,8 @@ export const fetchEvents = async (): Promise<EventDetails[]> => {
         id: doc.id,
         title: data.title ?? '',
         description: data.description ?? '',
-        start_time: data.start_time?.toDate() ?? '',
-        end_time: data.end_time?.toDate() ?? '',
+        start_time: convertToDate(data.start_time),
+        end_time: convertToDate(data.end_time),
         location_info: data.location_info ?? '',
         latitude: data.latitude ?? 0,
         longitude: data.longitude ?? 0,
@@ -100,7 +111,7 @@ export const fetchEvents = async (): Promise<EventDetails[]> => {
         is_RSVPable: data.is_RSVPable ?? false,
         invite_emails: data.invite_emails ?? [],
         host_id: data.host_id ?? '',
-        host_email: data.host_email ?? '',  // Fetch host_email
+        host_email: data.host_email ?? '',
       };
       events.push(event);
     });
@@ -124,8 +135,8 @@ export const fetchEventById = async (eventId: string): Promise<EventDetails | nu
         id: eventSnap.id,
         title: data?.title ?? '',
         description: data?.description ?? '',
-        start_time: data?.start_time?.toDate() ?? '',
-        end_time: data?.end_time?.toDate() ?? '',
+        start_time: convertToDate(data.start_time),
+        end_time: convertToDate(data.end_time),
         location_info: data?.location_info ?? '',
         latitude: data?.latitude ?? 0,
         longitude: data?.longitude ?? 0,
@@ -133,7 +144,7 @@ export const fetchEventById = async (eventId: string): Promise<EventDetails | nu
         is_RSVPable: data?.is_RSVPable ?? false,
         invite_emails: data?.invite_emails ?? [],
         host_id: data?.host_id ?? '',
-        host_email: data?.host_email ?? '',  // Fetch host_email
+        host_email: data?.host_email ?? '',
       };
     } else {
       console.error("Event not found");

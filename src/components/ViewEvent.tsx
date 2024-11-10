@@ -4,6 +4,7 @@ import { Button, Typography, Box, Snackbar, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth'; // Import Firebase auth to get the current user
 
+
 interface EventDetails {
     id: string;
     title: string;
@@ -19,14 +20,18 @@ interface EventDetails {
 
 interface ViewEventProps {
     eventId: string;
+    navigateToEditEvent: (eventId: string) => void;
+    currentUserId: string | null;
+    currentUserEmail: string | null;
 }
 
-const ViewEvent = ({ eventId }: ViewEventProps) => {
+const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
     const [event, setEvent] = useState<EventDetails | null>(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const navigate = useNavigate();
     const auth = getAuth(); // Get the Firebase auth instance
     const currentUserId = auth.currentUser?.uid; // Get the current user's ID
+
 
     useEffect(() => {
         const loadEvent = async () => {
@@ -79,6 +84,14 @@ const ViewEvent = ({ eventId }: ViewEventProps) => {
 
     const handleCloseSnackbar = () => {
         setSnackbarOpen(false);
+    };
+
+    const handleEditEvent = () => {
+        if (navigateToEditEvent) {
+            navigateToEditEvent(eventId); // Call the prop function to navigate
+        } else {
+            console.error("navigateToEditEvent function is undefined.");
+        }
     };
 
     if (!event) return <div>Loading event details...</div>;
@@ -139,7 +152,7 @@ const ViewEvent = ({ eventId }: ViewEventProps) => {
 
                 {isHost && (
                     <>
-                        <Button variant="outlined" onClick={() => navigate(`/events/edit/${eventId}`)}>
+                        <Button variant="outlined" onClick={handleEditEvent}>
                             Edit Event
                         </Button>
                         <Button variant="outlined" onClick={handleDelete}>
