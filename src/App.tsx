@@ -238,6 +238,7 @@ function App() {
             <HostEvent
                 setIsDroppingPin={setIsDroppingPin}
                 eventLocation={eventLocation}
+                setEventLocation={setEventLocation}
                 eventId={selectedEventId}
                 eventDetails={eventToEdit}
             />

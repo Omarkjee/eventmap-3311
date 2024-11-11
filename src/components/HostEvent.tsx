@@ -21,11 +21,13 @@ interface EventDetails {
 const HostEvent = ({
                      setIsDroppingPin,
                      eventLocation,
+                     setEventLocation,
                      eventId,
                      eventDetails
                    }: {
   setIsDroppingPin: React.Dispatch<React.SetStateAction<boolean>>,
   eventLocation: { lat: number; lng: number },
+  setEventLocation: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>,
   eventId?: string | null,
   eventDetails?: EventDetails
 }) => {
@@ -59,6 +61,9 @@ const HostEvent = ({
             : eventDetails.end_time.toISOString().slice(0, 16),
         invite_emails: eventDetails.invite_emails // Directly use as an array
       });
+      if (eventDetails.latitude && eventDetails.longitude) {
+        setEventLocation({ lat: eventDetails.latitude, lng: eventDetails.longitude });
+      }
     }
   }, [eventDetails]);
 
