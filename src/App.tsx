@@ -209,7 +209,9 @@ function App() {
         <DialogTitle>Confirm Logout</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to log out? You will be redirected to the events page.
+            {activeSection === 'viewEvent' || activeSection === 'events'
+              ? "Are you sure you want to log out?"
+              : "Are you sure you want to log out? You will be redirected to the events page."}
           </DialogContentText>
         </DialogContent>
         <DialogActions>

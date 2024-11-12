@@ -18,7 +18,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import Login from './Login'; // Ensure path is correct for Login component
-import SignUp from './SignUp'; // Ensure path is correct for SignUp component
+import SignUp from './Signup'; // Ensure path is correct for SignUp component
 
 interface NavBarProps {
   onNavClick: (section: string) => void;
