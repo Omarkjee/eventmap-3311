@@ -24,6 +24,10 @@ function App() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const [hasRedirectedAfterLogin, setHasRedirectedAfterLogin] = useState<boolean>(false);
+  
+  // States for pin-dropping functionality
+  const [isDroppingPin, setIsDroppingPin] = useState(false);
+  const [eventLocation, setEventLocation] = useState({ lat: 0, lng: 0 });
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,7 +58,6 @@ function App() {
         setCurrentUserEmail(user.email);
 
         if (!hasRedirectedAfterLogin && location.pathname !== `/events/${selectedEventId}`) {
-          // Only redirect if not already viewing an event
           setActiveSection('events');
           navigate('/events');
           setHasRedirectedAfterLogin(true);
@@ -86,7 +89,7 @@ function App() {
   const handleNavClick = (section: string) => {
     setActiveSection(section);
     if (section !== 'host') {
-      setIsDroppingPin(false);
+      setIsDroppingPin(false);  // Disable pin dropping when not in host section
     }
 
     switch (section) {
@@ -110,6 +113,12 @@ function App() {
     navigate(`/events/${eventId}`);
   };
 
+  const handleMapClick = (latLng: { lat: number; lng: number }) => {
+    if (isDroppingPin) {
+      setEventLocation(latLng);
+    }
+  };
+
   const handleLogout = () => {
     setLogoutDialogOpen(true);
   };
@@ -118,15 +127,11 @@ function App() {
     try {
       await logOut();
       setLogoutDialogOpen(false);
-
-      // Set the flag in sessionStorage before the reload
       sessionStorage.setItem('logout', 'true');
 
-      // If current view is either host or notifications, reload the page
       if (activeSection === 'host' || activeSection === 'notifications') {
         window.location.reload();
       } else {
-        // Show snackbar and navigate to events page after logout
         setSnackbarMessage('Successfully logged out!');
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
@@ -141,13 +146,12 @@ function App() {
     setLogoutDialogOpen(false);
   };
 
-  // Handle displaying the snackbar after the page reload
   useEffect(() => {
     if (sessionStorage.getItem('logout') === 'true') {
       setSnackbarMessage('Successfully logged out!');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
-      sessionStorage.removeItem('logout'); // Clear the flag
+      sessionStorage.removeItem('logout');
     }
   }, []);
 
@@ -161,6 +165,9 @@ function App() {
         return (
           <HostEvent
             eventId={selectedEventId}
+            setIsDroppingPin={setIsDroppingPin}
+            eventLocation={eventLocation}
+            setEventLocation={setEventLocation}
           />
         );
       case 'viewEvent':
@@ -190,6 +197,8 @@ function App() {
             <Map
               events={events}
               selectedEventId={selectedEventId}
+              isDroppingPin={isDroppingPin}
+              onMapClick={handleMapClick}
               viewEvent={viewEvent}
             />
           </Box>
