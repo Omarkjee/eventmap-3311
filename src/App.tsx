@@ -12,22 +12,21 @@ import HostEvent from './components/HostEvent';
 import ViewEvent from './components/ViewEvent';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { logOut } from './utils/firebaseAuth';
-import { EventDetails, fetchEvents } from './utils/firebaseEvents';
+import { EventDetails, fetchEvents, fetchEventById } from './utils/firebaseEvents';
 
 function App() {
   const [activeSection, setActiveSection] = useState<string>('events');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isDroppingPin, setIsDroppingPin] = useState(false);
+  const [eventLocation, setEventLocation] = useState({ lat: 0, lng: 0 });
   const [events, setEvents] = useState<EventDetails[]>([]);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState<boolean>(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const [hasRedirectedAfterLogin, setHasRedirectedAfterLogin] = useState<boolean>(false);
-  
-  // States for pin-dropping functionality
-  const [isDroppingPin, setIsDroppingPin] = useState(false);
-  const [eventLocation, setEventLocation] = useState({ lat: 0, lng: 0 });
+  const [eventToEdit, setEventToEdit] = useState<EventDetails | undefined>(undefined);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -78,6 +77,8 @@ function App() {
     if (pathParts[1] === 'events' && eventIdFromUrl) {
       setActiveSection('viewEvent');
       setSelectedEventId(eventIdFromUrl);
+      localStorage.setItem('activeSection', 'viewEvent');
+      localStorage.setItem('selectedEventId', eventIdFromUrl);
     }
   }, [location.pathname]);
 
@@ -85,6 +86,26 @@ function App() {
     setSelectedEventId(eventId);
     setActiveSection('host');
   };
+
+  useEffect(() => {
+    if (selectedEventId && activeSection === 'host') {
+      // Fetch the event details to edit when we are in 'host' mode and have an event selected
+      const fetchEventDetails = async () => {
+        const event = await fetchEventById(selectedEventId);
+        if (event) {
+          setEventToEdit({
+            ...event,
+            start_time: event.start_time instanceof Date ? event.start_time.toISOString() : event.start_time,
+            end_time: event.end_time instanceof Date ? event.end_time.toISOString() : event.end_time,
+          });
+        }
+      };
+      fetchEventDetails();
+    } else {
+      // Clear eventToEdit when not in edit mode
+      setEventToEdit(undefined);
+    }
+  }, [selectedEventId, activeSection]);
 
   const handleNavClick = (section: string) => {
     setActiveSection(section);
@@ -163,15 +184,16 @@ function App() {
         return <Notifications />;
       case 'host':
         return (
-          <HostEvent
-            eventId={selectedEventId}
-            setIsDroppingPin={setIsDroppingPin}
-            eventLocation={eventLocation}
-            setEventLocation={setEventLocation}
-          />
+            <HostEvent
+                setIsDroppingPin={setIsDroppingPin}
+                eventLocation={eventLocation}
+                setEventLocation={setEventLocation}
+                eventId={selectedEventId}
+                eventDetails={eventToEdit}
+            />
         );
       case 'viewEvent':
-        return selectedEventId ? <ViewEvent eventId={selectedEventId} currentUserId={currentUserId} currentUserEmail={currentUserEmail} /> : null;
+        return selectedEventId ? <ViewEvent eventId={selectedEventId} navigateToEditEvent={navigateToEditEvent} currentUserId={currentUserId} currentUserEmail={currentUserEmail} /> : null;
       default:
         return <EventsList viewEvent={viewEvent} events={events} />;
     }
