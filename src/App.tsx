@@ -77,8 +77,7 @@ function App() {
     if (pathParts[1] === 'events' && eventIdFromUrl) {
       setActiveSection('viewEvent');
       setSelectedEventId(eventIdFromUrl);
-      localStorage.setItem('activeSection', 'viewEvent');
-      localStorage.setItem('selectedEventId', eventIdFromUrl);
+
     }
   }, [location.pathname]);
 
