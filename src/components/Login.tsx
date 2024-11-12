@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { signIn } from '../utils/firebaseAuth';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 import { Box, Button, TextField, Typography, Alert, Link, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
@@ -15,7 +14,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, clearFormOnUnmount }) => 
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [forgotPasswordDialog, setForgotPasswordDialog] = useState(false);
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +21,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, clearFormOnUnmount }) => 
 
     try {
       await signIn(email, password);
-      onLoginSuccess();
-      navigate('/events');
+      onLoginSuccess(); // Perform any necessary actions on login success without redirecting
     } catch (error) {
       setError((error as Error).message);
     }

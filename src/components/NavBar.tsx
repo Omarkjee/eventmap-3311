@@ -1,110 +1,218 @@
 import React, { useState } from 'react';
-import { AppBar, Toolbar, Button, Typography, IconButton, Drawer, List, ListItem, ListItemText } from '@mui/material';
+import {
+  AppBar,
+  Toolbar,
+  Button,
+  Typography,
+  IconButton,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+  Dialog,
+  DialogContent,
+  Snackbar,
+  Alert,
+} from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import Login from './Login'; // Ensure path is correct for Login component
+import SignUp from './SignUp'; // Ensure path is correct for SignUp component
 
 interface NavBarProps {
-    onNavClick: (section: string) => void;
-    onLogout: () => void;  
-    isAuthenticated: boolean;
-    currentUserEmail?: string; // Added currentUserEmail prop
+  onNavClick: (section: string) => void;
+  onLogout: () => void;
+  isAuthenticated: boolean;
+  currentUserEmail?: string;
 }
 
-const NavBar: React.FC<NavBarProps> = ({ onNavClick, onLogout, isAuthenticated, currentUserEmail }) => {
-    const [drawerOpen, setDrawerOpen] = useState(false);
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+const NavBar: React.FC<NavBarProps> = ({
+  onNavClick,
+  onLogout,
+  isAuthenticated,
+  currentUserEmail,
+}) => {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+  const [signUpDialogOpen, setSignUpDialogOpen] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false); // State for snackbar visibility
+  const [snackbarMessage, setSnackbarMessage] = useState(''); // Snackbar message
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success'); // Severity of the snackbar
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-    const toggleDrawer = (open: boolean) => {
-        setDrawerOpen(open);
-    };
+  const toggleDrawer = (open: boolean) => {
+    setDrawerOpen(open);
+  };
 
-    const handleMenuItemClick = (section: string) => {
-        onNavClick(section);
-        setDrawerOpen(false);
-    };
+  const handleMenuItemClick = (section: string) => {
+    onNavClick(section);
+    setDrawerOpen(false);
+  };
 
-    // Menu items - only show "Host Event" and "Notifications" if the user is authenticated
-    const menuItems = [
-        { text: 'Events', section: 'events' },
-        ...(isAuthenticated ? [{ text: 'Host Event', section: 'host' }, { text: 'Notifications', section: 'notifications' }] : []), // Conditionally include Host Event and Notifications
-    ];
+  const handleLoginSuccess = () => {
+    setLoginDialogOpen(false);
+    setSnackbarMessage('Successfully logged in!');
+    setSnackbarSeverity('success');
+    setSnackbarOpen(true); // Show snackbar on successful login
+  };
 
-    // Extract the username from the currentUserEmail
-    const username = currentUserEmail ? currentUserEmail.split('@')[0] : 'Guest';
+  const handleLogoutSuccess = async () => {
+    try {
+      await onLogout(); // Assuming `onLogout` is a function that handles the logout process.
+      // Don't show snackbar on logout
+    } catch (error) {
+      // You can add error handling here if needed, but no snackbar for logout
+      console.error('Logout failed', error);
+    }
+  };
 
-    return (
-        <>
-            <AppBar position="static">
-                <Toolbar>
-                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                        Welcome, {username}!
-                    </Typography>
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false); // Close snackbar
+  };
 
-                    {isMobile ? (
-                        <>
-                            <IconButton edge="start" color="inherit" aria-label="menu" onClick={() => toggleDrawer(true)}>
-                                <MenuIcon />
-                            </IconButton>
+  // Extract the username from the currentUserEmail
+  const username = currentUserEmail ? currentUserEmail.split('@')[0] : 'Guest';
 
-                            <Drawer anchor="left" open={drawerOpen} onClose={() => toggleDrawer(false)}>
-                                <List>
-                                    {menuItems.map((item) => (
-                                        <ListItem
-                                            key={item.text}
-                                            onClick={() => handleMenuItemClick(item.section)}
-                                            component="button"
-                                        >
-                                            <ListItemText primary={item.text} />
-                                        </ListItem>
-                                    ))}
+  return (
+    <>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            Welcome, {username}!
+          </Typography>
 
-                                    {isAuthenticated ? (
-                                        <ListItem onClick={onLogout} component="button">
-                                            <ListItemText primary="Logout" />
-                                        </ListItem>
-                                    ) : (
-                                        <>
-                                            <ListItem onClick={() => handleMenuItemClick('login')} component="button">
-                                                <ListItemText primary="Login" />
-                                            </ListItem>
-                                            <ListItem onClick={() => handleMenuItemClick('signup')} component="button">
-                                                <ListItemText primary="Sign Up" />
-                                            </ListItem>
-                                        </>
-                                    )}
-                                </List>
-                            </Drawer>
-                        </>
-                    ) : (
-                        <>
-                            {menuItems.map((item) => (
-                                <Button key={item.text} color="inherit" onClick={() => onNavClick(item.section)}>
-                                    {item.text}
-                                </Button>
-                            ))}
+          {isMobile ? (
+            <>
+              <IconButton
+                edge="start"
+                color="inherit"
+                aria-label="menu"
+                onClick={() => toggleDrawer(true)}
+              >
+                <MenuIcon />
+              </IconButton>
 
-                            {isAuthenticated ? (
-                                <Button color="inherit" onClick={onLogout}>
-                                    Logout
-                                </Button>
-                            ) : (
-                                <>
-                                    <Button color="inherit" onClick={() => onNavClick('login')}>
-                                        Login
-                                    </Button>
-                                    <Button color="inherit" onClick={() => onNavClick('signup')}>
-                                        Sign Up
-                                    </Button>
-                                </>
-                            )}
-                        </>
-                    )}
-                </Toolbar>
-            </AppBar>
-        </>
-    );
+              <Drawer anchor="left" open={drawerOpen} onClose={() => toggleDrawer(false)}>
+                <List>
+                  {[
+                    { text: 'Events', section: 'events' },
+                    ...(isAuthenticated
+                      ? [
+                          { text: 'Host Event', section: 'host' },
+                          { text: 'Notifications', section: 'notifications' },
+                        ]
+                      : []),
+                  ].map((item) => (
+                    <ListItem
+                      key={item.text}
+                      onClick={() => handleMenuItemClick(item.section)}
+                      component="button"
+                    >
+                      <ListItemText primary={item.text} />
+                    </ListItem>
+                  ))}
+
+                  {isAuthenticated ? (
+                    <ListItem onClick={handleLogoutSuccess} component="button">
+                      <ListItemText primary="Logout" />
+                    </ListItem>
+                  ) : (
+                    <>
+                      <ListItem
+                        onClick={() => {
+                          setLoginDialogOpen(true); // Open login dialog
+                          setDrawerOpen(false); // Close drawer
+                        }}
+                        component="button"
+                      >
+                        <ListItemText primary="Login" />
+                      </ListItem>
+                      <ListItem
+                        onClick={() => {
+                          setSignUpDialogOpen(true); // Open sign-up dialog
+                          setDrawerOpen(false); // Close drawer
+                        }}
+                        component="button"
+                      >
+                        <ListItemText primary="Sign Up" />
+                      </ListItem>
+                    </>
+                  )}
+                </List>
+              </Drawer>
+            </>
+          ) : (
+            <>
+              {[
+                { text: 'Events', section: 'events' },
+                ...(isAuthenticated
+                  ? [
+                      { text: 'Host Event', section: 'host' },
+                      { text: 'Notifications', section: 'notifications' },
+                    ]
+                  : []),
+              ].map((item) => (
+                <Button key={item.text} color="inherit" onClick={() => onNavClick(item.section)}>
+                  {item.text}
+                </Button>
+              ))}
+
+              {isAuthenticated ? (
+                <Button color="inherit" onClick={handleLogoutSuccess}>
+                  Logout
+                </Button>
+              ) : (
+                <>
+                  <Button color="inherit" onClick={() => setLoginDialogOpen(true)}>
+                    Login
+                  </Button>
+                  <Button color="inherit" onClick={() => setSignUpDialogOpen(true)}>
+                    Sign Up
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </Toolbar>
+      </AppBar>
+
+      {/* Login Modal */}
+      <Dialog open={loginDialogOpen} onClose={() => setLoginDialogOpen(false)}>
+        <DialogContent>
+          <Login
+            onLoginSuccess={handleLoginSuccess} // Call the success handler here
+            clearFormOnUnmount={true}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Sign Up Modal */}
+      <Dialog open={signUpDialogOpen} onClose={() => setSignUpDialogOpen(false)}>
+        <DialogContent>
+          <SignUp
+            onSignUpSuccess={() => {
+              setSignUpDialogOpen(false);
+            }}
+            clearFormOnUnmount={true}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Snackbar for login success */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+    </>
+  );
 };
 
 export default NavBar;
