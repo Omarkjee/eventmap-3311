@@ -27,6 +27,7 @@ function App() {
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const [hasRedirectedAfterLogin, setHasRedirectedAfterLogin] = useState<boolean>(false);
   const [eventToEdit, setEventToEdit] = useState<EventDetails | undefined>(undefined);
+  const [markers, setMarkers] = useState<Array<{ lat: number, lng: number }>>([]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,9 +45,14 @@ function App() {
       const now = new Date();
       const currentAndUpcomingEvents = fetchedEvents.filter(event => new Date(event.end_time) >= now);
       setEvents(currentAndUpcomingEvents);
+      setSelectedEventId(null);
     } catch (error) {
       console.error("Error fetching events: ", error);
     }
+  };
+
+  const clearDroppedPin = () => {
+    setMarkers([]); // Clear markers array in Map component
   };
 
   useEffect(() => {
@@ -118,6 +124,9 @@ function App() {
 
   const handleNavClick = (section: string) => {
     setActiveSection(section);
+    if (section !== 'viewEvent') {
+      setSelectedEventId(null); // Clear selected event ID when not viewing an event
+    }
     if (section !== 'host') {
       setIsDroppingPin(false);  // Disable pin dropping when not in host section
     }
@@ -204,10 +213,17 @@ function App() {
                 eventId={selectedEventId}
                 eventDetails={eventToEdit}
                 refreshEvents={updateEvents}
+                setActiveSection={setActiveSection}
+                setSelectedEventId={setSelectedEventId}
+                clearDroppedPin={clearDroppedPin}
             />
         );
       case 'viewEvent':
-        return selectedEventId ? <ViewEvent eventId={selectedEventId} navigateToEditEvent={navigateToHostEvent} currentUserId={currentUserId} currentUserEmail={currentUserEmail} /> : null;
+        return selectedEventId ? <ViewEvent eventId={selectedEventId}
+                                            navigateToEditEvent={navigateToHostEvent}
+                                            currentUserId={currentUserId}
+                                            currentUserEmail={currentUserEmail}
+        /> : null;
       default:
         return <EventsList viewEvent={viewEvent} events={events} />;
     }
@@ -236,6 +252,9 @@ function App() {
               isDroppingPin={isDroppingPin}
               onMapClick={handleMapClick}
               viewEvent={viewEvent}
+              markers={markers}
+              setMarkers={setMarkers}
+              clearDroppedPin={clearDroppedPin}
             />
           </Box>
         </Grid>

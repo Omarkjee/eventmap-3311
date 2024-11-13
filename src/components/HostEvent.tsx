@@ -24,14 +24,20 @@ const HostEvent = ({
   setEventLocation,
   eventId,
   eventDetails,
-  refreshEvents
+  refreshEvents,
+  setActiveSection,
+  setSelectedEventId,
+  clearDroppedPin
   }: {
   setIsDroppingPin: React.Dispatch<React.SetStateAction<boolean>>,
   eventLocation: { lat: number; lng: number },
   setEventLocation: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>,
   eventId?: string | null,
   eventDetails?: EventDetails,
-  refreshEvents: () => void
+  refreshEvents: () => void,
+  setActiveSection: (sectionId: string) => void,
+  setSelectedEventId: React.Dispatch<React.SetStateAction<string | null>>,
+  clearDroppedPin: () => void
 }) => {
   const [eventDetailsState, setEventDetailsState] = useState<EventDetails>({
     title: '',
@@ -129,6 +135,14 @@ const HostEvent = ({
         alert("Event created successfully!");
       }
       refreshEvents();
+
+      setSelectedEventId(null); // Deselect any event
+      setEventLocation({ lat: 0, lng: 0 }); // Reset the location
+      setIsDroppingPin(false);
+      clearDroppedPin();
+      setActiveSection("events"); // Navigate back to the events list view
+
+
     } catch (error) {
       console.error("Error creating/editing event:", error);
       alert("An error occurred. Please try again.");

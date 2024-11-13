@@ -1,27 +1,33 @@
-
 import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { EventDetails } from '../utils/firebaseEvents';
 import { Box, Checkbox, FormControlLabel } from '@mui/material';
+import yellowPinUrl from '../assets/yellowPin.png';
 
 const Map = ({
                  events,
                  selectedEventId,
                  onMapClick,
                  isDroppingPin,
-                 viewEvent
+                 markers,
+                 setMarkers,
+                 viewEvent,
+                 clearDroppedPin,
              }: {
     events: Array<EventDetails>,
     selectedEventId: string | null,
     onMapClick: (coords: { lat: number, lng: number }) => void,
     isDroppingPin: boolean,
-    viewEvent: (eventId: string) => void
+    viewEvent: (eventId: string) => void,
+    markers: Array<{ lat: number; lng: number }>, // Receive markers
+    setMarkers: React.Dispatch<React.SetStateAction<Array<{ lat: number; lng: number }>>>,
+    clearDroppedPin: () => void
 }) => {
-    const [markers, setMarkers] = useState<Array<{ lat: number; lng: number }>>([]);
     const [showPins, setShowPins] = useState(true);
     const [selectedPin, setSelectedPin] = useState<string | null>(null);
+
 
     // Custom icons for default and highlighted pins
     const defaultIcon = new L.Icon({
@@ -34,20 +40,21 @@ const Map = ({
     });
 
     const highlightedIcon = new L.Icon({
-        iconUrl: 'src/assets/yellowPin.png',
+        iconUrl: yellowPinUrl,  // Ensure this path is correct
         iconSize: [35, 41],
         iconAnchor: [12, 41],
         popupAnchor: [1, -34],
         shadowSize: [41, 41],
     });
 
+    // This function handles map clicks when dropping a new pin
     const MapClickHandler = () => {
         useMapEvents({
             click(e: L.LeafletMouseEvent) {
                 if (isDroppingPin) {
                     const { lat, lng } = e.latlng;
-                    setMarkers([{ lat, lng }]);
-                    onMapClick({ lat, lng });
+                    setMarkers([{ lat, lng }]); // Add dropped pin marker
+                    onMapClick({ lat, lng }); // Callback for handling dropped pin coordinates
                 }
             }
         });
@@ -57,8 +64,16 @@ const Map = ({
     useEffect(() => {
         if (selectedEventId) {
             setSelectedPin(selectedEventId);
+        } else {
+            setSelectedPin(null); // Reset selected pin when not viewing an event
         }
     }, [selectedEventId, events]);
+
+    useEffect(() => {
+        if (!isDroppingPin && markers.length > 0) {
+            clearDroppedPin(); // Clear the dropped pin when no longer in dropping state
+        }
+    }, [isDroppingPin, markers, clearDroppedPin]);
 
     return (
         <Box sx={{ position: 'relative' }}>
@@ -73,19 +88,19 @@ const Map = ({
                     backgroundColor: 'white',
                     padding: '5px',
                     borderRadius: '4px',
-                    boxShadow: 3
+                    boxShadow: 3,
                 }}
             />
 
             <MapContainer
                 center={[32.728, -97.114]}
                 zoom={16}
-                minZoom={15} 
+                minZoom={15}
                 maxZoom={18}
                 scrollWheelZoom={true}
-                doubleClickZoom={true} 
+                doubleClickZoom={true}
                 zoomControl={true}
-                style={{ height: "100vh", width: "100%" }}
+                style={{ height: '100vh', width: '100%' }}
                 maxBounds={[[32.722, -97.125], [32.742, -97.105]]}
             >
                 <TileLayer
@@ -93,46 +108,48 @@ const Map = ({
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 />
 
-                {showPins && !isDroppingPin && events.map(event => (
-                    <Marker
-                        key={event.id}
-                        position={[event.latitude, event.longitude]}
-                        icon={event.id === selectedPin ? highlightedIcon : defaultIcon}
-                        eventHandlers={{
-                            click: (e) => {
-                                setSelectedPin(event.id);
-                                e.target.openPopup();  // Explicitly open the popup on click
-                            },
-                            mouseover: (e) => {
-                                if (event.id !== selectedPin) {
-                                    e.target.openPopup();
-                                }
-                            },
-                            mouseout: (e) => {
-                                if (event.id !== selectedPin) {
-                                    e.target.closePopup();
-                                }
-                            }
-                        }}
-                    >
-                        <Popup closeButton={true}>
-                <span
-                    onClick={() => viewEvent(event.id)}
-                    style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
-                >
-                  {event.title}
-                </span>
-                            <br />
-                            {new Date(event.start_time).toLocaleString()} - {new Date(event.end_time).toLocaleString()}
-                        </Popup>
-                    </Marker>
-                ))}
+                {showPins &&
+                    !isDroppingPin &&
+                    events.map((event) => (
+                        <Marker
+                            key={event.id}
+                            position={[event.latitude, event.longitude]}
+                            icon={event.id === selectedEventId ? highlightedIcon : defaultIcon}// Highlight only the viewed event
+                            eventHandlers={{
+                                click: (e) => {
+                                    setSelectedPin(event.id); // Ensure the popup stays open on click
+                                    e.target.openPopup(); // Explicitly open the popup on click
+                                },
+                                mouseover: (e) => {
+                                    if (event.id !== selectedPin) {
+                                        e.target.openPopup(); // Show popup on mouseover
+                                    }
+                                },
+                                mouseout: (e) => {
+                                    if (event.id !== selectedPin) {
+                                        e.target.closePopup(); // Hide popup on mouseout if not the selected pin
+                                    }
+                                },
+                            }}
+                        >
+                            <Popup closeButton={true}>
+                                <span
+                                    onClick={() => viewEvent(event.id)} // Only navigate to ViewEvent when clicking the title
+                                    style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
+                                >
+                                    {event.title}
+                                </span>
+                                <br />
+                                {new Date(event.start_time).toLocaleString()} -{' '}
+                                {new Date(event.end_time).toLocaleString()}
+                            </Popup>
+                        </Marker>
+                    ))}
 
+                {/* Render dropped pin */}
                 {markers.map((position, index) => (
                     <Marker key={index} position={[position.lat, position.lng]}>
-                        <Popup>
-                            Event location: {position.lat}, {position.lng}
-                        </Popup>
+                        <Popup>Event location: {position.lat}, {position.lng}</Popup>
                     </Marker>
                 ))}
 
