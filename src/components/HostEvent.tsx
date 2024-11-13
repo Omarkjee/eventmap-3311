@@ -49,7 +49,6 @@ const HostEvent = ({
   const filter = new Filter();
 
   useEffect(() => {
-    // Populate the form with event details if editing
     if (eventDetails) {
       setEventDetailsState({
         ...eventDetails,
@@ -59,11 +58,26 @@ const HostEvent = ({
         end_time: typeof eventDetails.end_time === 'string'
             ? eventDetails.end_time.slice(0, 16)
             : eventDetails.end_time.toISOString().slice(0, 16),
-        invite_emails: eventDetails.invite_emails // Directly use as an array
+        invite_emails: eventDetails.invite_emails, // Directly use as an array
       });
       if (eventDetails.latitude && eventDetails.longitude) {
         setEventLocation({ lat: eventDetails.latitude, lng: eventDetails.longitude });
       }
+    } else {
+      // Clear form for new event creation
+      setEventDetailsState({
+        title: '',
+        description: '',
+        start_time: '',
+        end_time: '',
+        location_info: '',
+        latitude: 0,
+        longitude: 0,
+        is_private: false,
+        is_RSVPable: false,
+        invite_emails: [],
+        host_id: ''
+      });
     }
   }, [eventDetails]);
 

@@ -82,9 +82,17 @@ function App() {
     }
   }, [location.pathname]);
 
-  const navigateToEditEvent = (eventId: string) => {
-    setSelectedEventId(eventId);
-    setActiveSection('host');
+  const navigateToHostEvent = (eventId?: string) => {
+    if (eventId) {
+      // Edit existing event
+      setSelectedEventId(eventId);
+      setActiveSection('host');
+    } else {
+      // Create new event
+      setSelectedEventId(null);
+      setEventToEdit(undefined); // Clear previous event details
+      setActiveSection('host');
+    }
   };
 
   useEffect(() => {
@@ -111,6 +119,10 @@ function App() {
     setActiveSection(section);
     if (section !== 'host') {
       setIsDroppingPin(false);  // Disable pin dropping when not in host section
+    }
+    if (section === 'host') {
+      setSelectedEventId(null); // Clear selected event ID
+      setEventToEdit(undefined); // Clear event data to prevent pre-fill
     }
 
     switch (section) {
@@ -193,7 +205,7 @@ function App() {
             />
         );
       case 'viewEvent':
-        return selectedEventId ? <ViewEvent eventId={selectedEventId} navigateToEditEvent={navigateToEditEvent} currentUserId={currentUserId} currentUserEmail={currentUserEmail} /> : null;
+        return selectedEventId ? <ViewEvent eventId={selectedEventId} navigateToEditEvent={navigateToHostEvent} currentUserId={currentUserId} currentUserEmail={currentUserEmail} /> : null;
       default:
         return <EventsList viewEvent={viewEvent} events={events} />;
     }
