@@ -35,18 +35,19 @@ function App() {
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadEvents = async () => {
-      try {
-        const fetchedEvents = await fetchEvents();
-        const now = new Date();
-        const currentAndUpcomingEvents = fetchedEvents.filter(event => new Date(event.end_time) >= now);
-        setEvents(currentAndUpcomingEvents);
-      } catch (error) {
-        console.error("Error fetching events: ", error);
-      }
-    };
-    loadEvents();
+    updateEvents();
   }, []);
+
+  const updateEvents = async () => {
+    try {
+      const fetchedEvents = await fetchEvents();
+      const now = new Date();
+      const currentAndUpcomingEvents = fetchedEvents.filter(event => new Date(event.end_time) >= now);
+      setEvents(currentAndUpcomingEvents);
+    } catch (error) {
+      console.error("Error fetching events: ", error);
+    }
+  };
 
   useEffect(() => {
     const auth = getAuth();
@@ -202,6 +203,7 @@ function App() {
                 setEventLocation={setEventLocation}
                 eventId={selectedEventId}
                 eventDetails={eventToEdit}
+                refreshEvents={updateEvents}
             />
         );
       case 'viewEvent':

@@ -19,17 +19,19 @@ interface EventDetails {
 }
 
 const HostEvent = ({
-                     setIsDroppingPin,
-                     eventLocation,
-                     setEventLocation,
-                     eventId,
-                     eventDetails
-                   }: {
+  setIsDroppingPin,
+  eventLocation,
+  setEventLocation,
+  eventId,
+  eventDetails,
+  refreshEvents
+  }: {
   setIsDroppingPin: React.Dispatch<React.SetStateAction<boolean>>,
   eventLocation: { lat: number; lng: number },
   setEventLocation: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>,
   eventId?: string | null,
-  eventDetails?: EventDetails
+  eventDetails?: EventDetails,
+  refreshEvents: () => void
 }) => {
   const [eventDetailsState, setEventDetailsState] = useState<EventDetails>({
     title: '',
@@ -126,6 +128,7 @@ const HostEvent = ({
         await createEvent(newEvent);
         alert("Event created successfully!");
       }
+      refreshEvents();
     } catch (error) {
       console.error("Error creating/editing event:", error);
       alert("An error occurred. Please try again.");
