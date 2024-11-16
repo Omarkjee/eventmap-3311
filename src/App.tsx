@@ -79,15 +79,27 @@ function App() {
   }, [navigate, hasRedirectedAfterLogin, selectedEventId, location.pathname]);
 
   useEffect(() => {
+    // Check the pathname to update activeSection correctly
     const pathParts = location.pathname.split('/');
-    const eventIdFromUrl = pathParts[2];
-    if (pathParts[1] === 'events' && eventIdFromUrl) {
+  
+    if (pathParts[1] === 'events' && pathParts[2]) {
+      // Handling case for viewing a specific event
       setActiveSection('viewEvent');
-      setSelectedEventId(eventIdFromUrl);
-      localStorage.setItem('activeSection', 'viewEvent');
-      localStorage.setItem('selectedEventId', eventIdFromUrl);
+      setSelectedEventId(pathParts[2]);
+    } else if (pathParts[1] === 'host') {
+      // Handling case for the 'host' section (for creating or editing events)
+      setActiveSection('host');
+      setSelectedEventId(null); // Ensure no event is selected when creating a new one
+    } else if (pathParts[1] === 'notifications') {
+      // Handling case for the 'notifications' section
+      setActiveSection('notifications');
+    } else {
+      // Default to events page
+      setActiveSection('events');
     }
-  }, [location.pathname]);
+  }, [location.pathname]);  // Trigger when the URL changes
+  
+  
 
   const navigateToHostEvent = (eventId?: string) => {
     if (eventId) {

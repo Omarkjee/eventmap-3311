@@ -1,26 +1,40 @@
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Allow anyone to read and create documents in the "users" collection.
-    // This allows new user data to be stored even if the user has not verified their email.
+    // Users collection
     match /users/{userId} {
+      // Allow anyone to read user data (you can modify this for more privacy if needed)
       allow read: if true;
-      allow create: if true;
-      allow update, delete: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow creating new users and updating their own data
+      allow create: if true; // Anyone can create their own user data
+      allow update, delete: if request.auth != null && request.auth.uid == userId; // Users can update or delete their own document
+
+      // Additional rule to allow users to modify only their RSVP_events field
+      allow update: if request.auth != null && request.auth.uid == userId &&
+                    request.resource.data.keys().hasOnly(['RSVP_events']) && 
+                    // Ensure only the RSVP_events field is being updated
+                    request.resource.data.RSVP_events is list;
     }
 
-    // Allow public access to events, but restrict hosting (create, update, delete) to authenticated users.
+    // Events collection
     match /events/{eventId} {
-      allow read: if true; // Anyone can read events
-      allow create: if request.auth != null; // Only authenticated users can create events
+      // Allow anyone to read events
+      allow read: if true;
+      
+      // Allow authenticated users to create events
+      allow create: if request.auth != null;
+
+      // Allow updating or deleting an event only if the user is the host of the event
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.host_id;
     }
 
-    // Additional collections or documents with restricted access
-    // Example: RSVP collection inside each event
+    // RSVP collection inside each event
     match /events/{eventId}/rsvps/{rsvpId} {
-      allow create: if request.auth != null; // Only authenticated users can RSVP
-      allow delete: if request.auth != null && request.auth.uid == resource.data.userId; // Only users who RSVP'd can delete their RSVP
+      // Allow authenticated users to RSVP (create an RSVP)
+      allow create: if request.auth != null;
+      
+      // Allow users to delete their RSVP if they are the one who created it
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
   }
 }

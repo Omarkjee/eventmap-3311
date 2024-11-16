@@ -8,7 +8,7 @@ import {
     UserCredential, 
     User 
 } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";  // Firestore functions
+import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";  // Firestore functions
 
 const auth = getAuth(app);
 const firestore = getFirestore(app);  // Initialize Firestore
@@ -41,6 +41,37 @@ export const fetchUserById = async (userId: string): Promise<{ email: string; us
     }
 };
 
+// Add an event to the user's RSVP_events array
+export const addUserRSVP = async (userId: string, eventId: string): Promise<void> => {
+  try {
+    const userRef = doc(firestore, "users", userId);
+    await updateDoc(userRef, {
+      RSVP_events: arrayUnion(eventId) // Add the event ID to the RSVP_events array
+    });
+    console.log(`Event ${eventId} added to RSVP_events for user ${userId}`);
+  } catch (error) {
+    console.error("Error updating RSVP_events:", error);
+    throw new Error("Failed to update RSVP_events: " + error.message);
+  }
+};
+
+// Fetch the user's RSVP events
+export const fetchUserRSVPs = async (userId: string): Promise<string[]> => {
+  try {
+    const userDoc = await getDoc(doc(firestore, "users", userId));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      return userData?.RSVP_events || [];  // Return the RSVP_events array or an empty array if it doesn't exist
+    } else {
+      console.warn("No RSVP data found for user with ID:", userId);
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching RSVP events:", error);
+    return [];
+  }
+};
+
 // Sign up new user
 export const signUp = async (email: string, password: string, displayName: string = "User"): Promise<void> => {
   try {
@@ -56,7 +87,8 @@ export const signUp = async (email: string, password: string, displayName: strin
       email: user.email,
       createdAt: new Date().toISOString(),
       host_id: user.uid,           // Storing user ID as host_id
-      host_email: user.email       // Storing user email as host_email
+      host_email: user.email,      // Storing user email as host_email
+      RSVP_events: []              // Initialize RSVP_events as an empty array
     });
 
     // Send verification email
