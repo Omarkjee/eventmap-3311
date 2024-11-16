@@ -4,15 +4,14 @@ service cloud.firestore {
     match /users/{userId} {
       // Allow anyone to read user data (you can modify this for more privacy if needed)
       allow read: if true;
-      
+
       // Allow creating new users and updating their own data
-      allow create: if true; // Anyone can create their own user data
-      allow update, delete: if request.auth != null && request.auth.uid == userId; // Users can update or delete their own document
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
 
       // Additional rule to allow users to modify only their RSVP_events field
       allow update: if request.auth != null && request.auth.uid == userId &&
                     request.resource.data.keys().hasOnly(['RSVP_events']) && 
-                    // Ensure only the RSVP_events field is being updated
                     request.resource.data.RSVP_events is list;
     }
 
@@ -20,19 +19,24 @@ service cloud.firestore {
     match /events/{eventId} {
       // Allow anyone to read events
       allow read: if true;
-      
+
       // Allow authenticated users to create events
       allow create: if request.auth != null;
 
       // Allow updating or deleting an event only if the user is the host of the event
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.host_id;
+
+      // Allow authenticated users to RSVP to the event by updating RSVP_users
+      allow update: if request.auth != null &&
+                    request.resource.data.keys().hasOnly(['RSVP_users']) &&
+                    request.resource.data.RSVP_users is list;
     }
 
     // RSVP collection inside each event
     match /events/{eventId}/rsvps/{rsvpId} {
       // Allow authenticated users to RSVP (create an RSVP)
       allow create: if request.auth != null;
-      
+
       // Allow users to delete their RSVP if they are the one who created it
       allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }

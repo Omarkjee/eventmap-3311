@@ -183,19 +183,26 @@ function App() {
       await logOut();
       setLogoutDialogOpen(false);
       sessionStorage.setItem('logout', 'true');
-
-      if (activeSection === 'host' || activeSection === 'notifications') {
-        window.location.reload();
-      } else {
+  
+      // Check if the user is viewing an event
+      if (activeSection === 'viewEvent') {
+        // If viewing an event, just show the snackbar without redirecting
         setSnackbarMessage('Successfully logged out!');
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
-        navigate('/events');
+      } else {
+        // Otherwise, navigate to the events page
+        setSnackbarMessage('Successfully logged out!');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+        navigate('/events'); // Redirect to the events page
       }
     } catch (error) {
       alert("Logout failed. Please try again.");
     }
   };
+  
+  
 
   const cancelLogout = () => {
     setLogoutDialogOpen(false);

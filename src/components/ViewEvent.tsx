@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { fetchEventById, deleteEvent } from '../utils/firebaseEvents';
-import { addUserRSVP, fetchUserRSVPs } from '../utils/firebaseAuth'; // Import the RSVP and fetchUserRSVPs functions
+import { addUserRSVP, removeUserRSVP, fetchUserRSVPs } from '../utils/firebaseAuth'; // Import the removeUserRSVP function
 import { Button, Typography, Box, Snackbar, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { getAuth } from 'firebase/auth'; // Import Firebase auth to get the current user
+import { getAuth } from 'firebase/auth';
 
 interface EventDetails {
     id: string;
@@ -12,11 +12,11 @@ interface EventDetails {
     location_info: string;
     start_time: Date | string;
     end_time: Date | string;
-    host_id: string; // This will be used to derive host_email
+    host_id: string;
     is_private: boolean;
     invite_emails: string[];
-    host_email: string; // Added host_email to the EventDetails interface
-    RSVP_events: string[]; // List of user IDs that RSVP'd to the event
+    host_email: string;
+    RSVP_events: string[]; // List of event IDs that the user has RSVP'd to
 }
 
 interface ViewEventProps {
@@ -32,11 +32,10 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
     const navigate = useNavigate();
-    const auth = getAuth(); // Get the Firebase auth instance
-    const currentUserId = auth.currentUser?.uid; // Get the current user's ID
-    const [userRSVPs, setUserRSVPs] = useState<string[]>([]); // Store the user's RSVP'd events
+    const auth = getAuth();
+    const currentUserId = auth.currentUser?.uid;
+    const [userRSVPs, setUserRSVPs] = useState<string[]>([]);
 
-    // Fetch the event details
     useEffect(() => {
         const loadEvent = async () => {
             try {
@@ -50,13 +49,12 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
         loadEvent();
     }, [eventId]);
 
-    // Fetch the user's RSVP data
     useEffect(() => {
         const loadUserRSVPs = async () => {
             if (currentUserId) {
                 try {
                     const userRSVPList = await fetchUserRSVPs(currentUserId);
-                    setUserRSVPs(userRSVPList); // Store RSVP'd event IDs
+                    setUserRSVPs(userRSVPList);
                 } catch (error) {
                     console.error("Error fetching user RSVPs:", error);
                 }
@@ -79,7 +77,7 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
     };
 
     const handleCopyLink = () => {
-        const eventUrl = `${window.location.origin}/events/${eventId}`; // Generate event URL
+        const eventUrl = `${window.location.origin}/events/${eventId}`;
         navigator.clipboard.writeText(eventUrl)
             .then(() => {
                 setSnackbarOpen(true);
@@ -102,7 +100,7 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
                 `Location: ${event.location_info}\n` +
                 `Start Time: ${new Date(event.start_time).toLocaleString()}\n` +
                 `End Time: ${new Date(event.end_time).toLocaleString()}\n\n` +
-                `You can view more details here: ${window.location.origin}/events/${eventId}`; // Ensure correct URL
+                `You can view more details here: ${window.location.origin}/events/${eventId}`;
             window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         }
     };
@@ -113,7 +111,7 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
 
     const handleEditEvent = () => {
         if (navigateToEditEvent) {
-            navigateToEditEvent(eventId); // Call the prop function to navigate
+            navigateToEditEvent(eventId);
         } else {
             console.error("navigateToEditEvent function is undefined.");
         }
@@ -129,36 +127,35 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
 
         try {
             if (event) {
-                // Check if the user has already RSVP'd to this event
                 if (userRSVPs.includes(eventId)) {
+                    // Remove RSVP
+                    await removeUserRSVP(currentUserId, eventId);
                     setSnackbarOpen(true);
-                    setSnackbarMessage("You have already RSVP'd to this event.");
-                    setSnackbarSeverity("info");
-                    return;
+                    setSnackbarMessage("RSVP removed from event.");
+                    setSnackbarSeverity("success");
+                } else {
+                    // Add RSVP
+                    await addUserRSVP(currentUserId, eventId);
+                    setSnackbarOpen(true);
+                    setSnackbarMessage("Successfully RSVP'd to the event!");
+                    setSnackbarSeverity("success");
                 }
-
-                // Add the user to the event's RSVP list in Firebase
-                await addUserRSVP(currentUserId, eventId);
-                
-                setSnackbarOpen(true);
-                setSnackbarMessage("Successfully RSVP'd to the event!");
-                setSnackbarSeverity("success");
+                // Re-fetch user's RSVPs to reflect changes
+                const updatedRSVPs = await fetchUserRSVPs(currentUserId);
+                setUserRSVPs(updatedRSVPs);
             }
         } catch (error) {
             console.error("Error RSVPing to event:", error);
             setSnackbarOpen(true);
-            setSnackbarMessage("Failed to RSVP. Please try again.");
+            setSnackbarMessage("Failed to update RSVP. Please try again.");
             setSnackbarSeverity("error");
         }
     };
 
     if (!event) return <div>Loading event details...</div>;
 
-    // Extract host from host_email and handle empty cases
     const hostEmail = event.host_email;
-    const host = hostEmail && hostEmail.includes('@') ? hostEmail.split('@')[0] : 'Unavailable'; // Fallback if host_email is invalid
-
-    // Check if the current user is the host
+    const host = hostEmail && hostEmail.includes('@') ? hostEmail.split('@')[0] : 'Unavailable';
     const isHost = currentUserId === event.host_id;
 
     return (
@@ -189,9 +186,8 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
                 <strong>End Time:</strong> {new Date(event.end_time).toLocaleString()}
             </Typography>
 
-            {/* Display the host instead of host_email */}
             <Typography variant="body1" paragraph>
-                <strong>Host:</strong> {host} ({hostEmail}) {/* Display host's email */}
+                <strong>Host:</strong> {host} ({hostEmail})
             </Typography>
 
             {event.is_private && (
@@ -207,8 +203,14 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
                 <Button variant="outlined" onClick={handleShareByEmail}>
                     Share Event via Email
                 </Button>
-                <Button variant="outlined" onClick={handleRSVP}>
-                    RSVP to Event
+
+                {/* Disable RSVP button for the host */}
+                <Button 
+                    variant="outlined" 
+                    onClick={handleRSVP} 
+                    disabled={isHost}
+                >
+                    {isHost ? 'You are the Host (Cannot RSVP)' : (userRSVPs.includes(eventId) ? 'Remove RSVP' : 'RSVP to Event')}
                 </Button>
 
                 {isHost && (

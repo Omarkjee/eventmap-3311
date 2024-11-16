@@ -8,7 +8,7 @@ import {
     UserCredential, 
     User 
 } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";  // Firestore functions
+import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";  // Ensure arrayRemove is imported
 
 const auth = getAuth(app);
 const firestore = getFirestore(app);  // Initialize Firestore
@@ -52,6 +52,20 @@ export const addUserRSVP = async (userId: string, eventId: string): Promise<void
   } catch (error) {
     console.error("Error updating RSVP_events:", error);
     throw new Error("Failed to update RSVP_events: " + error.message);
+  }
+};
+
+// Remove an event from the user's RSVP_events array
+export const removeUserRSVP = async (userId: string, eventId: string): Promise<void> => {
+  try {
+    const userRef = doc(firestore, "users", userId);
+    await updateDoc(userRef, {
+      RSVP_events: arrayRemove(eventId) // Remove the event ID
+    });
+    console.log(`Event ${eventId} removed from RSVP_events for user ${userId}`);
+  } catch (error) {
+    console.error("Error removing RSVP:", error);
+    throw new Error("Failed to remove RSVP: " + error.message);  // Make sure to throw an error for UI handling
   }
 };
 
