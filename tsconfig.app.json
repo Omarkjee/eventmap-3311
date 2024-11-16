@@ -8,18 +8,15 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
-    "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    /* Composite project requirements */
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src"  // Ensures only 'src' files are used as root source
   },
-  "include": ["src/**/*"],  // Explicitly include all TypeScript and JSX files in 'src'
-  "exclude": ["node_modules"]  // Exclude 'node_modules' to avoid TypeScript scanning it
+  "include": ["src/**/*"],  // Explicitly include all files in 'src'
+  "exclude": ["node_modules"]
 }

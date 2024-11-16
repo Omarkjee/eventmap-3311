@@ -235,7 +235,7 @@ function App() {
         onNavClick={handleNavClick} 
         onLogout={handleLogout} 
         isAuthenticated={isAuthenticated} 
-        currentUserEmail={currentUserEmail}
+        currentUserEmail={currentUserEmail ?? undefined}
       />
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>

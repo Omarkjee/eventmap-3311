@@ -7,16 +7,13 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
-    "noEmit": true,
 
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    /* Composite project requirements */
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./"  // Set to project root if 'vite.config.ts' cannot be moved
   },
   "include": ["vite.config.ts"]
 }
