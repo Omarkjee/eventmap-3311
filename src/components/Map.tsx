@@ -148,7 +148,7 @@ const Map = ({
 
                 {/* Render dropped pin */}
                 {markers.map((position, index) => (
-                    <Marker key={index} position={[position.lat, position.lng]}>
+                    <Marker key={index} position={[position.lat, position.lng]} icon={defaultIcon}>
                         <Popup>Event location: {position.lat}, {position.lng}</Popup>
                     </Marker>
                 ))}
