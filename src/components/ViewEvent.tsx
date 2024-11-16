@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { fetchEventById, deleteEvent } from '../utils/firebaseEvents';
+import { addUserRSVP, fetchUserRSVPs } from '../utils/firebaseAuth'; // Import the RSVP and fetchUserRSVPs functions
 import { Button, Typography, Box, Snackbar, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth'; // Import Firebase auth to get the current user
-
 
 interface EventDetails {
     id: string;
@@ -16,6 +16,7 @@ interface EventDetails {
     is_private: boolean;
     invite_emails: string[];
     host_email: string; // Added host_email to the EventDetails interface
+    RSVP_events: string[]; // List of user IDs that RSVP'd to the event
 }
 
 interface ViewEventProps {
@@ -28,11 +29,14 @@ interface ViewEventProps {
 const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
     const [event, setEvent] = useState<EventDetails | null>(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
     const navigate = useNavigate();
     const auth = getAuth(); // Get the Firebase auth instance
     const currentUserId = auth.currentUser?.uid; // Get the current user's ID
+    const [userRSVPs, setUserRSVPs] = useState<string[]>([]); // Store the user's RSVP'd events
 
-
+    // Fetch the event details
     useEffect(() => {
         const loadEvent = async () => {
             try {
@@ -45,6 +49,22 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
 
         loadEvent();
     }, [eventId]);
+
+    // Fetch the user's RSVP data
+    useEffect(() => {
+        const loadUserRSVPs = async () => {
+            if (currentUserId) {
+                try {
+                    const userRSVPList = await fetchUserRSVPs(currentUserId);
+                    setUserRSVPs(userRSVPList); // Store RSVP'd event IDs
+                } catch (error) {
+                    console.error("Error fetching user RSVPs:", error);
+                }
+            }
+        };
+
+        loadUserRSVPs();
+    }, [currentUserId]);
 
     const handleDelete = async () => {
         if (window.confirm("Are you sure you want to delete this event?")) {
@@ -63,9 +83,14 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
         navigator.clipboard.writeText(eventUrl)
             .then(() => {
                 setSnackbarOpen(true);
-                console.log("Event URL copied:", eventUrl); // Log the URL for verification
+                setSnackbarMessage("Event link copied to clipboard!");
+                setSnackbarSeverity("success");
             })
-            .catch((error) => console.error("Failed to copy link:", error));
+            .catch((error) => {
+                setSnackbarOpen(true);
+                setSnackbarMessage("Failed to copy link.");
+                setSnackbarSeverity("error");
+            });
     };
 
     const handleShareByEmail = () => {
@@ -91,6 +116,39 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
             navigateToEditEvent(eventId); // Call the prop function to navigate
         } else {
             console.error("navigateToEditEvent function is undefined.");
+        }
+    };
+
+    const handleRSVP = async () => {
+        if (!currentUserId) {
+            setSnackbarOpen(true);
+            setSnackbarMessage("You must be logged in to RSVP.");
+            setSnackbarSeverity("error");
+            return;
+        }
+
+        try {
+            if (event) {
+                // Check if the user has already RSVP'd to this event
+                if (userRSVPs.includes(eventId)) {
+                    setSnackbarOpen(true);
+                    setSnackbarMessage("You have already RSVP'd to this event.");
+                    setSnackbarSeverity("info");
+                    return;
+                }
+
+                // Add the user to the event's RSVP list in Firebase
+                await addUserRSVP(currentUserId, eventId);
+                
+                setSnackbarOpen(true);
+                setSnackbarMessage("Successfully RSVP'd to the event!");
+                setSnackbarSeverity("success");
+            }
+        } catch (error) {
+            console.error("Error RSVPing to event:", error);
+            setSnackbarOpen(true);
+            setSnackbarMessage("Failed to RSVP. Please try again.");
+            setSnackbarSeverity("error");
         }
     };
 
@@ -133,7 +191,7 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
 
             {/* Display the host instead of host_email */}
             <Typography variant="body1" paragraph>
-                <strong>Host:</strong> {host} {/* Display host without domain */}
+                <strong>Host:</strong> {host} ({hostEmail}) {/* Display host's email */}
             </Typography>
 
             {event.is_private && (
@@ -149,6 +207,9 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
                 <Button variant="outlined" onClick={handleShareByEmail}>
                     Share Event via Email
                 </Button>
+                <Button variant="outlined" onClick={handleRSVP}>
+                    RSVP to Event
+                </Button>
 
                 {isHost && (
                     <>
@@ -160,12 +221,11 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
                         </Button>
                     </>
                 )}
-
             </Box>
 
             <Snackbar open={snackbarOpen} autoHideDuration={5000} onClose={handleCloseSnackbar}>
-                <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
-                    Event link copied to clipboard!
+                <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                    {snackbarMessage}
                 </Alert>
             </Snackbar>
         </Box>

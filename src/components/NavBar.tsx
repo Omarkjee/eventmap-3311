@@ -97,11 +97,11 @@ const NavBar: React.FC<NavBarProps> = ({
               <Drawer anchor="left" open={drawerOpen} onClose={() => toggleDrawer(false)}>
                 <List>
                   {[
-                    { text: 'Events', section: 'events' },
+                    { text: 'Home', section: 'events' },
                     ...(isAuthenticated
                       ? [
                           { text: 'Host Event', section: 'host' },
-                          { text: 'Notifications', section: 'notifications' },
+                          { text: 'My Events', section: 'notifications' },
                         ]
                       : []),
                   ].map((item) => (
@@ -146,11 +146,11 @@ const NavBar: React.FC<NavBarProps> = ({
           ) : (
             <>
               {[
-                { text: 'Events', section: 'events' },
+                { text: 'Home', section: 'events' },
                 ...(isAuthenticated
                   ? [
                       { text: 'Host Event', section: 'host' },
-                      { text: 'Notifications', section: 'notifications' },
+                      { text: 'My Events', section: 'notifications' },
                     ]
                   : []),
               ].map((item) => (
