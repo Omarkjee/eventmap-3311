@@ -1,22 +1,40 @@
-rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Events collection
-    match /events/{eventId} {
-      allow read: if true;  // Allows anyone to read events
-      allow write: if request.auth != null;  // Allows writes only if the user is authenticated
-    }
-
     // Users collection
     match /users/{userId} {
-      // Allow users to read their own data
-      allow read: if request.auth != null && request.auth.uid == userId;
+      // Allow anyone to read user data (you can modify this for more privacy if needed)
+      allow read: if true;
       
-      // Allow users to modify their RSVP events array (only for their own user document)
+      // Allow creating new users and updating their own data
+      allow create: if true; // Anyone can create their own user data
+      allow update, delete: if request.auth != null && request.auth.uid == userId; // Users can update or delete their own document
+
+      // Additional rule to allow users to modify only their RSVP_events field
       allow update: if request.auth != null && request.auth.uid == userId &&
                     request.resource.data.keys().hasOnly(['RSVP_events']) && 
                     // Ensure only the RSVP_events field is being updated
                     request.resource.data.RSVP_events is list;
+    }
+
+    // Events collection
+    match /events/{eventId} {
+      // Allow anyone to read events
+      allow read: if true;
+      
+      // Allow authenticated users to create events
+      allow create: if request.auth != null;
+
+      // Allow updating or deleting an event only if the user is the host of the event
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.host_id;
+    }
+
+    // RSVP collection inside each event
+    match /events/{eventId}/rsvps/{rsvpId} {
+      // Allow authenticated users to RSVP (create an RSVP)
+      allow create: if request.auth != null;
+      
+      // Allow users to delete their RSVP if they are the one who created it
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
   }
 }

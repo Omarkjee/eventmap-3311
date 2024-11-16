@@ -24,14 +24,15 @@ interface NavBarProps {
   onNavClick: (section: string) => void;
   onLogout: () => void;
   isAuthenticated: boolean;
-  currentUserEmail?: string;
+  currentUserEmail?: string | null;
+  onSignUpSuccess?: () => void;
 }
 
 const NavBar: React.FC<NavBarProps> = ({
   onNavClick,
   onLogout,
   isAuthenticated,
-  currentUserEmail,
+  currentUserEmail
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);

@@ -58,16 +58,20 @@ const HostEvent = ({
 
   useEffect(() => {
     if (eventDetails) {
+      // Hardcode a -6 hour offset for display
+      const localStartTime = new Date(eventDetails.start_time);
+      localStartTime.setHours(localStartTime.getHours() - 6);
+
+      const localEndTime = new Date(eventDetails.end_time);
+      localEndTime.setHours(localEndTime.getHours() - 6);
+
       setEventDetailsState({
         ...eventDetails,
-        start_time: typeof eventDetails.start_time === 'string'
-            ? eventDetails.start_time.slice(0, 16)
-            : eventDetails.start_time.toISOString().slice(0, 16), // Format Date as a string in "YYYY-MM-DDTHH:mm"
-        end_time: typeof eventDetails.end_time === 'string'
-            ? eventDetails.end_time.slice(0, 16)
-            : eventDetails.end_time.toISOString().slice(0, 16),
-        invite_emails: eventDetails.invite_emails, // Directly use as an array
+        start_time: localStartTime.toISOString().slice(0, 16), // Format for datetime-local input
+        end_time: localEndTime.toISOString().slice(0, 16),
+        invite_emails: eventDetails.invite_emails,
       });
+
       if (eventDetails.latitude && eventDetails.longitude) {
         setEventLocation({ lat: eventDetails.latitude, lng: eventDetails.longitude });
       }
@@ -88,6 +92,10 @@ const HostEvent = ({
       });
     }
   }, [eventDetails]);
+
+
+
+
 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

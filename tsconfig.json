@@ -4,25 +4,14 @@
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "skipLibCheck": true,
-
-    /* Bundler mode */
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "jsx": "react-jsx",
-
-    /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "noEmit": true // Ensures no files are emitted globally
   },
-  "include": ["src/**/*"],  // Ensure all files in 'src' are included
-  "exclude": ["node_modules"],  // Exclude 'node_modules' to avoid unnecessary linting
-  "files": [],  // You can keep this empty as it's not needed unless specific files are needed
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"],
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }

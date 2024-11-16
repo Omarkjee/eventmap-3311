@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import { signUp } from '../utils/firebaseAuth';
 import { Box, Button, TextField, Typography, Alert } from '@mui/material';
 
-const Signup = () => {
+interface SignupProps {
+  onSignUpSuccess?: () => void | undefined;
+  clearFormOnUnmount?: boolean;
+}
+
+const Signup: React.FC<SignupProps> = ({ onSignUpSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +28,9 @@ const Signup = () => {
     try {
       await signUp(email, password);
       setSuccessMessage("Sign up successful! Please check your email for verification.");
+      if (onSignUpSuccess) {
+        onSignUpSuccess(); // Call the success handler
+      }
     } catch (error) {
       setError((error as Error).message);
     }
