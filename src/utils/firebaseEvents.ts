@@ -1,5 +1,8 @@
 import { app } from './firebaseConfig';
-import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, getDocs, Timestamp, deleteDoc, query, where } from 'firebase/firestore';
+import { 
+  getFirestore, collection, addDoc, doc, updateDoc, getDoc, getDocs, 
+  Timestamp, deleteDoc, query, where, arrayUnion, arrayRemove
+} from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 const db = getFirestore(app);
@@ -17,8 +20,9 @@ export type EventDetails = {
   is_private: boolean;
   is_RSVPable: boolean;
   invite_emails: string[];
-  host_id: string;       // User ID of the host
-  host_email: string;    // Email of the host
+  host_id: string;
+  host_email: string;
+  RSVP_users: string[]; // Added field to track RSVPs
 };
 
 // Create Event
@@ -33,7 +37,7 @@ export const createEvent = async (eventDetails: {
   title: string;
   location_info: string;
   host_id: string;
-  longitude: number
+  longitude: number;
 }): Promise<string> => {
   try {
     const user = auth.currentUser;
@@ -46,8 +50,9 @@ export const createEvent = async (eventDetails: {
       start_time: Timestamp.fromDate(new Date(eventDetails.start_time)),
       end_time: Timestamp.fromDate(new Date(eventDetails.end_time)),
       invite_emails: eventDetails.is_private ? eventDetails.invite_emails : [],
-      host_id: user.uid,     // Set the host_id to the user's ID
-      host_email: user.email, // Set the host_email to the user's email
+      host_id: user.uid,
+      host_email: user.email,
+      RSVP_users: [], // Initialize with an empty array
       created_at: Timestamp.now(),
       updated_at: Timestamp.now(),
     });
@@ -58,6 +63,51 @@ export const createEvent = async (eventDetails: {
     throw error;
   }
 };
+
+// RSVP to Event
+export const RSVPToEvent = async (eventId: string): Promise<void> => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    const eventRef = doc(db, 'events', eventId);
+    const eventSnap = await getDoc(eventRef);
+
+    if (!eventSnap.exists()) {
+      throw new Error("Event not found");
+    }
+
+    const eventData = eventSnap.data();
+    if (!eventData.is_RSVPable) {
+      throw new Error("RSVP is not allowed for this event");
+    }
+
+    // Add or remove user's UID from the RSVP_users array
+    const userRSVPed = eventData.RSVP_users.includes(user.uid);
+    if (userRSVPed) {
+      // Remove the user from RSVP list
+      await updateDoc(eventRef, {
+        RSVP_users: arrayRemove(user.uid), // Remove UID from RSVP_users array
+        updated_at: Timestamp.now(),
+      });
+      console.log(`User ${user.uid} removed RSVP from event ${eventId}`);
+    } else {
+      // Add the user to RSVP list
+      await updateDoc(eventRef, {
+        RSVP_users: arrayUnion(user.uid), // Add UID to RSVP_users array
+        updated_at: Timestamp.now(),
+      });
+      console.log(`User ${user.uid} RSVP'd to event ${eventId}`);
+    }
+  } catch (error) {
+    console.error("Error RSVPing to event:", error);
+    throw error;
+  }
+};
+
+
 
 // Edit Event
 export const editEvent = async (eventId: string, updatedDetails: Partial<EventDetails>): Promise<void> => {
@@ -79,6 +129,7 @@ export const editEvent = async (eventId: string, updatedDetails: Partial<EventDe
     throw error;
   }
 };
+
 // Helper function to ensure we get a Date object
 const convertToDate = (field: any) => {
   if (field instanceof Date) {
@@ -112,6 +163,7 @@ export const fetchEvents = async (): Promise<EventDetails[]> => {
         invite_emails: data.invite_emails ?? [],
         host_id: data.host_id ?? '',
         host_email: data.host_email ?? '',
+        RSVP_users: data.RSVP_users ?? [], // Include RSVP users
       };
       events.push(event);
     });
@@ -145,6 +197,7 @@ export const fetchEventById = async (eventId: string): Promise<EventDetails | nu
         invite_emails: data?.invite_emails ?? [],
         host_id: data?.host_id ?? '',
         host_email: data?.host_email ?? '',
+        RSVP_users: data?.RSVP_users ?? [], // Include RSVP users
       };
     } else {
       console.error("Event not found");
