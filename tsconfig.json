@@ -8,8 +8,10 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
+    "noEmit": true, // Ensure noEmit is true to allow allowImportingTsExtensions
     "jsx": "react-jsx",
 
     /* Linting */
@@ -18,8 +20,8 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"],
+  "include": ["src/**/*"],  // Ensure all files in 'src' are included
+  "exclude": ["node_modules"],  // Exclude 'node_modules' to avoid unnecessary linting
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
