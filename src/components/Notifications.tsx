@@ -28,10 +28,15 @@ const Notifications = () => {
                 const eventsRef = collection(db, 'events');
                 const q = query(eventsRef, where('host_id', '==', user.uid));
                 const createdEventsSnapshot = await getDocs(q);
-                const createdEventsData = createdEventsSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                })) as EventDetails[];
+                const createdEventsData = createdEventsSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        ...data,
+                        start_time: data.start_time?.toDate ? data.start_time.toDate() : data.start_time, // Convert Timestamp to Date
+                        end_time: data.end_time?.toDate ? data.end_time.toDate() : data.end_time,       // Convert Timestamp to Date
+                    };
+                }) as EventDetails[];
 
                 setCreatedEvents(createdEventsData);
 
