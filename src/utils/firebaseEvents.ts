@@ -47,6 +47,7 @@ export const createEvent = async (eventDetails: {
 
     const eventRef = await addDoc(collection(db, 'events'), {
       ...eventDetails,
+      is_RSVPable: true,
       start_time: Timestamp.fromDate(new Date(eventDetails.start_time)),
       end_time: Timestamp.fromDate(new Date(eventDetails.end_time)),
       invite_emails: eventDetails.is_private ? eventDetails.invite_emails : [],
@@ -119,6 +120,7 @@ export const editEvent = async (eventId: string, updatedDetails: Partial<EventDe
     if (eventSnap.exists() && eventSnap.data().host_email === user?.email) {
       await updateDoc(eventRef, {
         ...updatedDetails,
+        is_RSVPable: true,
         updated_at: Timestamp.now(),
       });
     } else {
@@ -159,7 +161,7 @@ export const fetchEvents = async (): Promise<EventDetails[]> => {
         latitude: data.latitude ?? 0,
         longitude: data.longitude ?? 0,
         is_private: data.is_private ?? false,
-        is_RSVPable: data.is_RSVPable ?? false,
+        is_RSVPable: true,
         invite_emails: data.invite_emails ?? [],
         host_id: data.host_id ?? '',
         host_email: data.host_email ?? '',
@@ -193,7 +195,7 @@ export const fetchEventById = async (eventId: string): Promise<EventDetails | nu
         latitude: data?.latitude ?? 0,
         longitude: data?.longitude ?? 0,
         is_private: data?.is_private ?? false,
-        is_RSVPable: data?.is_RSVPable ?? false,
+        is_RSVPable: true,
         invite_emails: data?.invite_emails ?? [],
         host_id: data?.host_id ?? '',
         host_email: data?.host_email ?? '',
@@ -214,6 +216,7 @@ export const deleteEvent = async (eventId: string): Promise<void> => {
   try {
     await deleteDoc(doc(db, 'events', eventId));
     console.log("Event deleted with ID:", eventId);
+    await fetchEvents()
   } catch (error: any) {
     console.error("Error deleting event:", error);
     throw error;
