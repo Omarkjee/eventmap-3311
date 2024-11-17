@@ -187,7 +187,12 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
             </Typography>
 
             <Typography variant="body1" paragraph>
-                <strong>Host:</strong> {host} ({hostEmail})
+                <strong>Host:</strong>{' '}
+                {currentUserId ? (
+                    `${host} (${hostEmail})`
+                ) : (
+                    <em>Login to see the host details</em>
+                )}
             </Typography>
 
             {event.is_private && (
