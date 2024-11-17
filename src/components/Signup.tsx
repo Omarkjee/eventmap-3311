@@ -12,7 +12,7 @@ const Signup: React.FC<SignupProps> = ({ onSignUpSuccess }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Disable inputs during submission
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const passwordRequirements = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
   const allowedDomains = ["@mavs.uta.edu", "@uta.edu"]; // Allowed domains
@@ -52,47 +52,60 @@ const Signup: React.FC<SignupProps> = ({ onSignUpSuccess }) => {
   };
 
   return (
-      <Box display="flex" flexDirection="column" alignItems="center" p={3} boxShadow={3} borderRadius={2} maxWidth={400} margin="auto">
-        <Typography variant="h4" gutterBottom>
-          Sign Up
-        </Typography>
-        <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-          <TextField
-              label="Email"
-              type="email"
-              fullWidth
-              margin="normal"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              helperText="Must register with a valid UTA student or faculty Email Address"
-              disabled={isSubmitting} // Disable input during submission
-          />
-          <TextField
-              label="Password"
-              type="password"
-              fullWidth
-              margin="normal"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              helperText="Password must be at least 8 characters long, contain one capital letter, one number, and one special character."
-              disabled={isSubmitting} // Disable input during submission
-          />
-          <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              fullWidth
-              sx={{ mt: 2 }}
-              disabled={!isEmailAllowed || isSubmitting} // Disable button if email is invalid or submitting
-          >
-            {isSubmitting ? "Signing Up..." : "Sign Up"}
-          </Button>
-        </form>
-        {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-        {successMessage && <Alert severity="success" sx={{ mt: 2 }}>{successMessage}</Alert>}
-      </Box>
+      <>
+        {/* Display success or error messages outside the signup box */}
+        {successMessage && (
+            <Alert severity="success" sx={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, maxWidth: '90%' }}>
+              {successMessage}
+            </Alert>
+        )}
+        {error && (
+            <Alert severity="error" sx={{ position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, maxWidth: '90%' }}>
+              {error}
+            </Alert>
+        )}
+
+        {/* Signup form */}
+        <Box display="flex" flexDirection="column" alignItems="center" p={3} boxShadow={3} borderRadius={2} maxWidth={400} margin="auto">
+          <Typography variant="h4" gutterBottom>
+            Sign Up
+          </Typography>
+          <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+            <TextField
+                label="Email"
+                type="email"
+                fullWidth
+                margin="normal"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                helperText="Must register with a valid UTA student or faculty Email Address"
+                disabled={isSubmitting}
+            />
+            <TextField
+                label="Password"
+                type="password"
+                fullWidth
+                margin="normal"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                helperText="Password must be at least 8 characters long, contain one capital letter, one number, and one special character."
+                disabled={isSubmitting}
+            />
+            <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                fullWidth
+                sx={{ mt: 2 }}
+                disabled={!isEmailAllowed || isSubmitting}
+            >
+              {isSubmitting ? "Signing Up..." : "Sign Up"}
+            </Button>
+          </form>
+        </Box>
+      </>
   );
 };
 
