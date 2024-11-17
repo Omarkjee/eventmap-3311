@@ -13,7 +13,6 @@ const Notifications = () => {
     const [originalRsvpCount, setOriginalRsvpCount] = useState<number>(0);  // Store the count of original RSVP events
     const [loading, setLoading] = useState<boolean>(true);  // Loading state to handle async fetching
     const [openModal, setOpenModal] = useState(false);  // State to control the Modal
-    const [missingEventsCount, setMissingEventsCount] = useState<number>(0);  // Store the count of missing events
     const auth = getAuth();
     const db = getFirestore();
     const navigate = useNavigate();  // Hook for navigating to event details
@@ -171,61 +170,61 @@ const Notifications = () => {
                     )}
 
                     {/* Display RSVP management button */}
-                    <Button
-                        onClick={() => setOpenModal(true)}
-                        variant="outlined"
-                        color="primary"
-                        sx={{ marginTop: '20px' }}
-                    >
-                        Manage Your RSVPs ({originalRsvpCount})  {/* Show the original RSVP count */}
-                    </Button>
+                    {/*<Button*/}
+                    {/*    onClick={() => setOpenModal(true)}*/}
+                    {/*    variant="outlined"*/}
+                    {/*    color="primary"*/}
+                    {/*    sx={{ marginTop: '20px' }}*/}
+                    {/*>*/}
+                    {/*    Manage Your RSVPs ({originalRsvpCount})  /!* Show the original RSVP count *!/*/}
+                    {/*</Button>*/}
                 </>
             )}
 
             {/* Modal to manage missing RSVP events */}
-            <Modal
-                open={openModal}
-                onClose={() => setOpenModal(false)}
-                aria-labelledby="modal-title"
-                aria-describedby="modal-description"
-            >
-                <Box sx={{
-                    position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                    backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '400px', width: '100%'
-                }}>
-                    <Typography id="modal-title" variant="h6" gutterBottom>
-                        Missing Events
-                    </Typography>
-                    {missingEventsCount > 0 ? (
-                        <Typography id="modal-description" variant="body1" gutterBottom>
-                            You have {missingEventsCount} event(s) in your RSVP list that no longer exist. Would you like to remove them?
-                        </Typography>
-                    ) : (
-                        <Typography id="modal-description" variant="body1" gutterBottom>
-                            There are no missing events in your RSVP list.
-                        </Typography>
-                    )}
+            {/*<Modal*/}
+            {/*    open={openModal}*/}
+            {/*    onClose={() => setOpenModal(false)}*/}
+            {/*    aria-labelledby="modal-title"*/}
+            {/*    aria-describedby="modal-description"*/}
+            {/*>*/}
+            {/*    <Box sx={{*/}
+            {/*        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',*/}
+            {/*        backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '400px', width: '100%'*/}
+            {/*    }}>*/}
+            {/*        <Typography id="modal-title" variant="h6" gutterBottom>*/}
+            {/*            Missing Events*/}
+            {/*        </Typography>*/}
+            {/*        {missingEventsCount > 0 ? (*/}
+            {/*            <Typography id="modal-description" variant="body1" gutterBottom>*/}
+            {/*                You have {missingEventsCount} event(s) in your RSVP list that no longer exist. Would you like to remove them?*/}
+            {/*            </Typography>*/}
+            {/*        ) : (*/}
+            {/*            <Typography id="modal-description" variant="body1" gutterBottom>*/}
+            {/*                There are no missing events in your RSVP list.*/}
+            {/*            </Typography>*/}
+            {/*        )}*/}
 
-                    {missingEventsCount > 0 && (
-                        <Button
-                            variant="contained"
-                            color="secondary"
-                            onClick={handleRemoveMissingEvents}
-                            sx={{ marginTop: '10px' }}
-                        >
-                            Remove Missing Events
-                        </Button>
-                    )}
+            {/*        {missingEventsCount > 0 && (*/}
+            {/*            <Button*/}
+            {/*                variant="contained"*/}
+            {/*                color="secondary"*/}
+            {/*                onClick={handleRemoveMissingEvents}*/}
+            {/*                sx={{ marginTop: '10px' }}*/}
+            {/*            >*/}
+            {/*                Remove Missing Events*/}
+            {/*            </Button>*/}
+            {/*        )}*/}
 
-                    <Button
-                        variant="outlined"
-                        onClick={() => setOpenModal(false)}
-                        sx={{ marginTop: '10px', marginLeft: '10px' }}
-                    >
-                        Close
-                    </Button>
-                </Box>
-            </Modal>
+            {/*        <Button*/}
+            {/*            variant="outlined"*/}
+            {/*            onClick={() => setOpenModal(false)}*/}
+            {/*            sx={{ marginTop: '10px', marginLeft: '10px' }}*/}
+            {/*        >*/}
+            {/*            Close*/}
+            {/*        </Button>*/}
+            {/*    </Box>*/}
+            {/*</Modal>*/}
         </div>
     );
 };

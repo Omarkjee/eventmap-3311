@@ -12,7 +12,13 @@ import HostEvent from './components/HostEvent';
 import ViewEvent from './components/ViewEvent';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { logOut } from './utils/firebaseAuth';
-import { EventDetails, fetchEvents, fetchEventById } from './utils/firebaseEvents';
+import {
+  EventDetails,
+  fetchEvents,
+  fetchEventById,
+  cleanupOldEvents,
+  cleanupFirestoreRSVPEvents
+} from './utils/firebaseEvents';
 
 function App() {
   const [activeSection, setActiveSection] = useState<string>('events');
