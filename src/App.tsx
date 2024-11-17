@@ -45,6 +45,27 @@ function App() {
     updateEvents();
   }, []);
 
+  useEffect(() => {
+    const runCleanups = async () => {
+      try {
+        // Run cleanup for old events
+        await cleanupOldEvents();
+
+        // Run cleanup for user RSVPs if logged in
+        if (currentUserId) {
+          await cleanupFirestoreRSVPEvents(currentUserId);
+        }
+
+        // Refresh events after cleanup
+        updateEvents();
+      } catch (error) {
+        console.error("Error running cleanups: ", error);
+      }
+    };
+
+    runCleanups();
+  }, [currentUserId]);
+
   const updateEvents = async () => {
     try {
       const fetchedEvents = await fetchEvents();
@@ -140,7 +161,7 @@ function App() {
     }
   }, [selectedEventId, activeSection]);
 
-  const handleNavClick = (section: string) => {
+  const handleNavClick = async (section: string) => {
     setActiveSection(section);
     if (section !== 'viewEvent') {
       setSelectedEventId(null); // Clear selected event ID when not viewing an event
@@ -151,6 +172,18 @@ function App() {
     if (section === 'host') {
       setSelectedEventId(null); // Clear selected event ID
       setEventToEdit(undefined); // Clear event data to prevent pre-fill
+    }
+    if (section === 'notifications' || section === 'events') {
+      try {
+        // Run cleanups on navigation to notifications or events
+        await cleanupOldEvents();
+        if (currentUserId) {
+          await cleanupFirestoreRSVPEvents(currentUserId);
+        }
+        updateEvents();
+      } catch (error) {
+        console.error("Error running cleanups during navigation: ", error);
+      }
     }
 
     switch (section) {
