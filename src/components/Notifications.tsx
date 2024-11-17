@@ -22,53 +22,45 @@ const Notifications = () => {
         const fetchUserEvents = async () => {
             const user = auth.currentUser;
             if (user) {
-                setLoading(true);  // Start loading
+                setLoading(true);
 
-                // Fetch created events (hosted by the user)
+                // Fetch created events
                 const eventsRef = collection(db, 'events');
-                const q = query(eventsRef, where('host_id', '==', user.uid));
-                const createdEventsSnapshot = await getDocs(q);
-                const createdEventsData = createdEventsSnapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        ...data,
-                        start_time: data.start_time?.toDate ? data.start_time.toDate() : data.start_time, // Convert Timestamp to Date
-                        end_time: data.end_time?.toDate ? data.end_time.toDate() : data.end_time,       // Convert Timestamp to Date
-                    };
-                }) as EventDetails[];
-
+                const createdQuery = query(eventsRef, where('host_id', '==', user.uid));
+                const createdEventsSnapshot = await getDocs(createdQuery);
+                const createdEventsData = createdEventsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    start_time: doc.data().start_time?.toDate ? doc.data().start_time.toDate() : new Date(doc.data().start_time),
+                    end_time: doc.data().end_time?.toDate ? doc.data().end_time.toDate() : new Date(doc.data().end_time),
+                }));
                 setCreatedEvents(createdEventsData);
 
-                // Fetch RSVP'd events (using the RSVP_events array in the user's profile)
+                // Fetch RSVP'd events
                 const rsvpEventsIds = await fetchUserRSVPs(user.uid);
-                setOriginalRsvpCount(rsvpEventsIds.length);  // Save the original count of RSVPs
-
-                if (rsvpEventsIds.length > 0) {
-                    const rsvpQuery = query(eventsRef, where('id', 'in', rsvpEventsIds));
+                const chunkSize = 10;
+                const rsvpEventsData: EventDetails[] = [];
+                for (let i = 0; i < rsvpEventsIds.length; i += chunkSize) {
+                    const chunk = rsvpEventsIds.slice(i, i + chunkSize);
+                    const rsvpQuery = query(eventsRef, where('__name__', 'in', chunk));
                     const rsvpEventsSnapshot = await getDocs(rsvpQuery);
-                    const rsvpEventsData = rsvpEventsSnapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data(),
-                    })) as EventDetails[];
-
-                    // Find missing events by comparing RSVP event IDs with the fetched events
-                    const existingEventIds = rsvpEventsData.map(event => event.id);
-                    const missingEventIds = rsvpEventsIds.filter(eventId => !existingEventIds.includes(eventId));
-                    setMissingEventsCount(missingEventIds.length);  // Set the count of missing events
-
-                    setRsvpEvents(rsvpEventsData);  // Set the RSVP events correctly
-                } else {
-                    setRsvpEvents([]);  // In case no RSVP'd events are found
-                    setMissingEventsCount(0);  // Ensure missing events count is reset
+                    rsvpEventsSnapshot.docs.forEach(doc => {
+                        rsvpEventsData.push({
+                            id: doc.id,
+                            ...doc.data(),
+                        } as EventDetails);
+                    });
                 }
+                setRsvpEvents(rsvpEventsData);
+                setOriginalRsvpCount(rsvpEventsIds.length);
 
-                setLoading(false);  // Stop loading once data is fetched
+                setLoading(false);
             }
         };
 
         fetchUserEvents();
     }, [auth, db]);
+
 
     // Debugging rsvpEvents update and count
     useEffect(() => {
