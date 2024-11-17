@@ -166,7 +166,7 @@ const Notifications = () => {
                             </List>
                         </Box>
                     ) : (
-                        <Typography>No RSVP'd events to display.</Typography>  // If no RSVP'd events
+                        <Typography>No Bookmarked events to display.</Typography>  // If no RSVP'd events
                     )}
 
                     {/* Display RSVP management button */}
