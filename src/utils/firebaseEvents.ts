@@ -108,6 +108,45 @@ export const RSVPToEvent = async (eventId: string): Promise<void> => {
   }
 };
 
+// Cleanup invalid RSVP events for a user in Firestore
+export const cleanupFirestoreRSVPEvents = async (userId: string): Promise<void> => {
+  try {
+    const userDocRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const rsvpEvents: string[] = userData?.RSVP_events || []; // Explicitly type as string[]
+
+      if (rsvpEvents.length > 0) {
+        const chunkSize = 10;
+        const validEventIds: string[] = [];
+
+        // Fetch valid event IDs in chunks
+        for (let i = 0; i < rsvpEvents.length; i += chunkSize) {
+          const chunk = rsvpEvents.slice(i, i + chunkSize);
+          const eventsQuery = query(collection(db, 'events'), where('__name__', 'in', chunk));
+          const eventsSnapshot = await getDocs(eventsQuery);
+          validEventIds.push(...eventsSnapshot.docs.map(doc => doc.id));
+        }
+
+        // Identify invalid event IDs (those that no longer exist in the `events` collection)
+        const invalidEventIds = rsvpEvents.filter((eventId: string) => !validEventIds.includes(eventId));
+
+        if (invalidEventIds.length > 0) {
+          // Update the user's document to remove invalid event IDs
+          const updatedRSVPEvents = rsvpEvents.filter((eventId: string) => !invalidEventIds.includes(eventId));
+          await updateDoc(userDocRef, { RSVP_events: updatedRSVPEvents });
+
+          console.log(`Cleaned up invalid RSVP events for user ${userId}`);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error cleaning up RSVP events:", error);
+  }
+};
+
 
 
 // Edit Event
@@ -143,13 +182,19 @@ const convertToDate = (field: any) => {
   return new Date(field);
 };
 
-// Fetch All Events
 export const fetchEvents = async (): Promise<EventDetails[]> => {
   try {
-    //cleanup old events
+    // Cleanup old events
     await cleanupOldEvents();
 
+    // Cleanup RSVP events for the currently logged-in user
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (user) {
+      await cleanupFirestoreRSVPEvents(user.uid);
+    }
 
+    // Fetch remaining valid events
     const querySnapshot = await getDocs(collection(db, 'events'));
     let events: EventDetails[] = [];
 
@@ -165,7 +210,7 @@ export const fetchEvents = async (): Promise<EventDetails[]> => {
         latitude: data.latitude ?? 0,
         longitude: data.longitude ?? 0,
         is_private: data.is_private ?? false,
-        is_RSVPable: true,
+        is_RSVPable: true, // Ensure RSVPable is always true
         invite_emails: data.invite_emails ?? [],
         host_id: data.host_id ?? '',
         host_email: data.host_email ?? '',
@@ -180,6 +225,7 @@ export const fetchEvents = async (): Promise<EventDetails[]> => {
     throw error;
   }
 };
+
 
 // Fetch Single Event by ID
 export const fetchEventById = async (eventId: string): Promise<EventDetails | null> => {
