@@ -146,7 +146,7 @@ const Notifications = () => {
 
                     {/* Display "R.S.V.P.'s" heading */}
                     <Typography variant="h5" gutterBottom>
-                        R.S.V.P.'s
+                        Bookmarked Events
                     </Typography>
                     {rsvpEvents.length > 0 ? (
                         <Box sx={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '8px', p: 1 }}>

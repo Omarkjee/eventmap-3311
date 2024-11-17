@@ -210,7 +210,7 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
                     onClick={handleRSVP} 
                     disabled={isHost}
                 >
-                    {isHost ? 'You are the Host (Cannot RSVP)' : (userRSVPs.includes(eventId) ? 'Remove RSVP' : 'RSVP to Event')}
+                    {isHost ? 'You are the Host (Cannot Bookmark)' : (userRSVPs.includes(eventId) ? 'Remove Bookmark' : 'Bookmark Event')}
                 </Button>
 
                 {isHost && (
