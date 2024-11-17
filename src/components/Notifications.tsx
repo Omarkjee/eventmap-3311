@@ -48,6 +48,8 @@ const Notifications = () => {
                         rsvpEventsData.push({
                             id: doc.id,
                             ...doc.data(),
+                            start_time: doc.data().start_time?.toDate ? doc.data().start_time.toDate() : new Date(doc.data().start_time),
+                            end_time: doc.data().end_time?.toDate ? doc.data().end_time.toDate() : new Date(doc.data().end_time),
                         } as EventDetails);
                     });
                 }
