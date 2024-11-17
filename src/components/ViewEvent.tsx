@@ -120,7 +120,7 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
     const handleRSVP = async () => {
         if (!currentUserId) {
             setSnackbarOpen(true);
-            setSnackbarMessage("You must be logged in to RSVP.");
+            setSnackbarMessage("You must be logged in to Bookmark.");
             setSnackbarSeverity("error");
             return;
         }
@@ -131,13 +131,13 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
                     // Remove RSVP
                     await removeUserRSVP(currentUserId, eventId);
                     setSnackbarOpen(true);
-                    setSnackbarMessage("RSVP removed from event.");
+                    setSnackbarMessage("Bookmark removed from event.");
                     setSnackbarSeverity("success");
                 } else {
                     // Add RSVP
                     await addUserRSVP(currentUserId, eventId);
                     setSnackbarOpen(true);
-                    setSnackbarMessage("Successfully RSVP'd to the event!");
+                    setSnackbarMessage("Successfully Bookmarked the event!");
                     setSnackbarSeverity("success");
                 }
                 // Re-fetch user's RSVPs to reflect changes
@@ -145,9 +145,9 @@ const ViewEvent = ({ eventId, navigateToEditEvent }: ViewEventProps) => {
                 setUserRSVPs(updatedRSVPs);
             }
         } catch (error) {
-            console.error("Error RSVPing to event:", error);
+            console.error("Error Bookmarking the event:", error);
             setSnackbarOpen(true);
-            setSnackbarMessage("Failed to update RSVP. Please try again.");
+            setSnackbarMessage("Failed to update Bookmark. Please try again.");
             setSnackbarSeverity("error");
         }
     };
