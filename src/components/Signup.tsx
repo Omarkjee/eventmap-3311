@@ -12,6 +12,7 @@ const Signup: React.FC<SignupProps> = ({ onSignUpSuccess }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Disable inputs during submission
 
   const passwordRequirements = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
   const allowedDomains = ["@mavs.uta.edu", "@uta.edu"]; // Allowed domains
@@ -23,14 +24,17 @@ const Signup: React.FC<SignupProps> = ({ onSignUpSuccess }) => {
     e.preventDefault();
     setError(null);
     setSuccessMessage(null);
+    setIsSubmitting(true);
 
     if (!isEmailAllowed) {
       setError("Only UTA email addresses are allowed (e.g., @mavs.uta.edu or @uta.edu).");
+      setIsSubmitting(false);
       return;
     }
 
     if (!passwordRequirements.test(password)) {
       setError("Password must contain at least 8 characters, one capital letter, one number, and one special character.");
+      setIsSubmitting(false);
       return;
     }
 
@@ -42,12 +46,16 @@ const Signup: React.FC<SignupProps> = ({ onSignUpSuccess }) => {
       }
     } catch (error) {
       setError((error as Error).message);
+    } finally {
+      setIsSubmitting(false); // Re-enable form inputs
     }
   };
 
   return (
       <Box display="flex" flexDirection="column" alignItems="center" p={3} boxShadow={3} borderRadius={2} maxWidth={400} margin="auto">
-        <Typography variant="h4" gutterBottom>Sign Up</Typography>
+        <Typography variant="h4" gutterBottom>
+          Sign Up
+        </Typography>
         <form onSubmit={handleSubmit} style={{ width: '100%' }}>
           <TextField
               label="Email"
@@ -58,6 +66,7 @@ const Signup: React.FC<SignupProps> = ({ onSignUpSuccess }) => {
               onChange={(e) => setEmail(e.target.value)}
               required
               helperText="Must register with a valid UTA student or faculty Email Address"
+              disabled={isSubmitting} // Disable input during submission
           />
           <TextField
               label="Password"
@@ -68,6 +77,7 @@ const Signup: React.FC<SignupProps> = ({ onSignUpSuccess }) => {
               onChange={(e) => setPassword(e.target.value)}
               required
               helperText="Password must be at least 8 characters long, contain one capital letter, one number, and one special character."
+              disabled={isSubmitting} // Disable input during submission
           />
           <Button
               type="submit"
@@ -75,9 +85,9 @@ const Signup: React.FC<SignupProps> = ({ onSignUpSuccess }) => {
               color="primary"
               fullWidth
               sx={{ mt: 2 }}
-              disabled={!isEmailAllowed} // Disable the button if the email is invalid
+              disabled={!isEmailAllowed || isSubmitting} // Disable button if email is invalid or submitting
           >
-            Sign Up
+            {isSubmitting ? "Signing Up..." : "Sign Up"}
           </Button>
         </form>
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
