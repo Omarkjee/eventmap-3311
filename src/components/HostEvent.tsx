@@ -218,10 +218,6 @@ const HostEvent = ({
               required
               margin="normal"
           />
-          <FormControlLabel
-              control={<Switch checked={eventDetailsState.is_private} onChange={(e) => setEventDetailsState({ ...eventDetailsState, is_private: e.target.checked })} />}
-              label="Make event private"
-          />
           {eventDetailsState.is_private && (
               <TextField
                   fullWidth
@@ -237,10 +233,6 @@ const HostEvent = ({
                   margin="normal"
               />
           )}
-          <FormControlLabel
-              control={<Switch checked={eventDetailsState.is_RSVPable} onChange={(e) => setEventDetailsState({ ...eventDetailsState, is_RSVPable: e.target.checked })} />}
-              label="Allow RSVPs"
-          />
           <Button
               fullWidth
               variant="contained"
