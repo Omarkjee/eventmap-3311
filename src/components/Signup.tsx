@@ -57,6 +57,7 @@ const Signup: React.FC<SignupProps> = ({ onSignUpSuccess }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              helperText="Must register with a valid UTA student or faculty Email Address"
           />
           <TextField
               label="Password"
