@@ -146,6 +146,10 @@ const convertToDate = (field: any) => {
 // Fetch All Events
 export const fetchEvents = async (): Promise<EventDetails[]> => {
   try {
+    //cleanup old events
+    await cleanupOldEvents();
+
+
     const querySnapshot = await getDocs(collection(db, 'events'));
     let events: EventDetails[] = [];
 
